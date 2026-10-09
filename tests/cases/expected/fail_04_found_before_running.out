@@ -1,0 +1,5 @@
+
+ooga booga! problem in fail_04_found_before_running.ooga line 6, column 5:
+    say bagg
+        ^
+no thing called "bagg". you mean "bag"?

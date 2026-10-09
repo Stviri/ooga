@@ -1,0 +1,13 @@
+# towers of hanoi: move 3 stones from peg a to peg c
+me has moves list
+
+me can hanoi n from_peg to_peg spare
+    if n is 0
+        give
+    me hanoi (n - 1) from_peg spare to_peg
+    moves gain from_peg + ">" + to_peg
+    me hanoi (n - 1) spare to_peg from_peg
+
+me hanoi 3 "a" "c" "b"
+say size of moves
+say me join moves " "

@@ -1,0 +1,8 @@
+box name "grok" health 100 club no
+grok get hit. health now 70
+grok pick up club
+has club? yes
+grok get hit. health now 10
+zug get hit. health now -10
+zug is down!
+list (box name "grok" health 10 club yes) (box name "zug" health (-10) club no)

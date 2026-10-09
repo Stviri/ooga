@@ -1,0 +1,8 @@
+# things made in a used file belong to everyone
+use "lib/counter"
+me click
+me click
+say me click
+say clicks
+clicks is 100
+say me click

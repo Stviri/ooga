@@ -20,14 +20,37 @@ public static class CliApp
             output.WriteLine("ooga run ooga files.");
             output.WriteLine("use like this:  ooga hello.ooga");
             output.WriteLine("words after the file name go to the script: me arguments");
+            output.WriteLine("same random numbers every time:  ooga --seed 7 hello.ooga");
             output.WriteLine("talk to ooga line by line:  ooga --talk");
+            output.WriteLine("check scripts against their expected output:  ooga --test examples");
             return args.Length == 0 ? UsageProblem : Ok;
         }
 
         if (args[0] is "--talk" or "-i")
             return Talk(input, output, error, color, realWait);
 
+        if (args[0] == "--test")
+            return TestRunner.Main(args.Skip(1).ToArray(), output);
+
+        int? seed = null;
+        if (args[0] == "--seed")
+        {
+            if (args.Length < 3 || !int.TryParse(args[1], out int s))
+            {
+                error.WriteLine("--seed need a whole number and then a file, like:  ooga --seed 7 hello.ooga");
+                return UsageProblem;
+            }
+            seed = s;
+            args = args.Skip(2).ToArray();
+        }
+
         string path = args[0];
+        if (path.StartsWith("--") && !File.Exists(path))
+        {
+            error.WriteLine($"ooga no know {path}. ooga know: --talk, --test, --seed, --help");
+            error.WriteLine("(if --help no show it either, this ooga.exe is old. get the new one with: git pull)");
+            return UsageProblem;
+        }
         if (!File.Exists(path))
         {
             error.WriteLine($"ooga no find file: {path}");
@@ -36,17 +59,26 @@ public static class CliApp
             return UsageProblem;
         }
 
+        var host = new ConsoleHost(input, output, realWait);
+        return RunScript(path, path, host, new RunOptions { FileName = path, Arguments = args.Skip(1).ToArray(), Seed = seed },
+            output, error, color);
+    }
+
+    // Runs one script file and prints any problem. Also used by the test runner.
+    internal static int RunScript(string path, string shownName, ConsoleHost host, RunOptions options,
+        TextWriter output, TextWriter error, bool color)
+    {
         string source = File.ReadAllText(path, Encoding.UTF8);
         try
         {
-            OogaRunner.Run(source, new ConsoleHost(input, output, realWait),
-                new RunOptions { FileName = path, Arguments = args.Skip(1).ToArray() });
+            OogaRunner.Run(source, host, options);
             output.Flush();
             return Ok;
         }
         catch (OogaError e)
         {
             output.Flush();
+            if (e.File == path) e.File = shownName;
             ShowError(error, e.Report(), color);
             return ScriptProblem;
         }

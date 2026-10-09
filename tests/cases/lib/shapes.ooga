@@ -1,0 +1,5 @@
+# this file uses another file. "math_tools" is found next to this file, in lib/
+use "math_tools"
+
+me can circle_area r
+    give pi_ish * (me square r)

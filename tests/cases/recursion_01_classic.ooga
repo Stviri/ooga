@@ -1,0 +1,18 @@
+me can factorial n
+    if n is small or same 1
+        give 1
+    give n * (me factorial (n - 1))
+
+me can fib n
+    if n is small 2
+        give n
+    give (me fib (n - 1)) + (me fib (n - 2))
+
+me can gcd a b
+    if b is 0
+        give a
+    give me gcd b (a % b)
+
+say me factorial 10
+say me fib 15
+say me gcd 48 18

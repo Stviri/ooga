@@ -1,0 +1,8 @@
+me can withdraw amount
+    if amount is big 50
+        fail "cave bank only has 50 shells, not " + amount
+    give 50 - amount
+
+say me withdraw 20
+say me withdraw 80
+say "never"

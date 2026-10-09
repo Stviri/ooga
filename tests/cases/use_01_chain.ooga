@@ -1,0 +1,6 @@
+# shapes uses math_tools, and so does this file. math_tools is still only brought in once.
+use "lib/shapes"
+use "lib/math_tools"
+say me circle_area 2
+say me square 5
+say pi_ish

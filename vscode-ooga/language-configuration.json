@@ -7,7 +7,7 @@
   ],
   "surroundingPairs": [["(", ")"], ["\"", "\""]],
   "indentationRules": {
-    "increaseIndentPattern": "^\\s*(if|else|repeat|count|me\\s+can)\\b.*$",
-    "decreaseIndentPattern": "^\\s*else\\b.*$"
+    "increaseIndentPattern": "^\\s*(if|else|repeat|count|each|try|oops|me\\s+can)\\b.*$",
+    "decreaseIndentPattern": "^\\s*(else|oops)\\b.*$"
   }
 }

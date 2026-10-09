@@ -41,6 +41,7 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 | C# door | `csharp`, `csharp_new`, `csharp_call`, `csharp_get`, `csharp_set`; values convert both ways; ooga actions become C# delegates; generic methods and LINQ work |
 | Console | `say`, `ask`, `random A to B`, `wait N`, `me die`, `me arguments` |
 | Talk mode | `ooga --talk`: type pieces, things are kept, a value alone is shown |
+| Script checks | `ooga --test examples tests/cases`: every script is compared with `expected/NAME.out` (typed answers from `.in`, words from `.args`); `--make-expected` writes missing ones; `--seed N` for repeatable random |
 | Errors | file, line, column, the code line, a `^` pointer, caveman message, "you mean ...?" hints |
 | Safety | step limit and cancellation, recursion limit, big stack, cycle-safe showing of lists |
 
@@ -65,7 +66,8 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 9. **`try` can not catch** `ooga tired` (the step limit), cancellation, or `me die`. A runaway program can always be stopped.
 10. **C# door rules:** objects made with `csharp_new` stay live C# objects, even collections. Results of calls and properties that are sequences become ooga lists, and dictionaries become boxes. Numbers go to `int` / `long` / ... only when they are whole and fit.
 11. **Talk mode** lets an action be taught again (handy while trying things). Files still forbid it.
-12. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
+12. **Script checks are repeatable:** random uses seed 1, `wait` does not wait, files go to a fresh temp folder, and line endings do not count. A `.out` file that shows `ooga booga! problem in` means the script must also end with exit code 1.
+13. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
 
 ## Limitations (known)
 
@@ -76,13 +78,15 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 - `wait` blocks the whole program (fine for the console, an engine adapter will handle it differently).
 - `when` events, `me is`, players, enemies and scenes need a game engine adapter. None exists yet.
 - Using a file thing before its `me has` line has run is caught **while running**, not before.
-- `bin\ooga.exe` was built on Linux for Windows. It is a valid Windows x64 program, but it has **not been run on Windows**. The same build's `ooga.dll` was run on Linux for every example and for talk mode.
+- `bin\ooga.exe` is built on Linux for Windows. **Checked on the user's Windows PC (2026-10-09):** `.\ooga --test examples tests\cases` gave `32 ok, 0 wrong`. Talk mode and VS Code Ctrl+Shift+B have not been reported from Windows yet.
 
 ## Tests run
 
 Command: `dotnet test Ooga.sln --blame-hang-timeout 2m` (on Linux, .NET SDK 8.0.131).
 
-Result: **461 passed, 0 failed, 0 skipped** (about 1 second).
+Result: **506 passed, 0 failed, 0 skipped** (about 1 second).
+
+Also: `ooga --test examples tests/cases` → **32 ok, 0 wrong** (15 examples + 17 cases), run with the published `bin/ooga.dll`.
 
 | Test file | What it covers |
 |---|---|
@@ -97,14 +101,29 @@ Result: **461 passed, 0 failed, 0 skipped** (about 1 second).
 | `ErrorTests` | 70 wrong programs with exact line, column and message, and the full error report |
 | `SafetyTests` | endless loops stop, cancellation, 20,000-deep recursion |
 | `ExampleAndCliTests` | every file in `examples/` through the real `ooga` command, with exact output; CLI behaviour |
+| `ScriptCaseTests` | every script in `examples/` and `tests/cases/` against its `expected/*.out` (the same check as `ooga --test`) |
+| `TestRunnerTests` | the checker itself fails when it should: wrong line, missing expected file, never-ending script, wrong exit code |
+
+### Script cases (`tests/cases/`)
+
+Expected output for these was written by hand from the rules **before** running them, not copied from what ooga printed.
+
+| Kind | Cases |
+|---|---|
+| Nested collections | `nested_01_grid` (lists in a list), `nested_02_boxes_in_lists` (boxes in a list, lists in boxes, actions changing them), `nested_03_lookups_and_copies` (box lookup of lists, shallow `copy`, boxes three deep, deep sameness) |
+| Recursion | `recursion_01_classic` (factorial, fibonacci, gcd), `recursion_02_walk_nested` (sum, flatten and depth of nested lists), `recursion_03_mutual_and_limit` (two actions calling each other; endless recursion caught with `try`), `recursion_04_hanoi` |
+| Imports (`use`) | `use_01_chain` (a used file using another file; each file once), `use_02_shared_things`, `use_03_mistake_in_used_file`, `use_04_missing_file`, `use_05_problem_while_running` (caught, then uncaught, error shows the used file) |
+| Failures | `fail_01_uncaught_fail`, `fail_02_try_in_loops` (try per round, a problem inside oops), `fail_03_nested_out_of_range`, `fail_04_found_before_running`, `fail_05_caught_messages` |
+
+**Bug found by these cases and fixed:** when a used file used another file (`lib/shapes` → `math_tools`), ooga looked for the second file from the *shown* name of the first, not its real place. It only worked when ooga was started from the right folder. Now the console host remembers where each used file really is.
 
 Every test runs with a 10-second wall-clock limit and a 2,000,000-step limit.
 
-Also checked by hand with the published `bin/ooga.dll`: all 15 examples (exit code 0, and 1 for `07_mistakes` on purpose) and a talk-mode session.
+Also checked by hand with the published `bin/ooga.dll`: all 15 examples (exit code 0, and 1 for `07_mistakes` on purpose), a talk-mode session, nested `use` started from another folder, and that `--test` says WRONG (exit 1) when an expected file is changed on purpose.
 
 ## Next recommended tasks
 
-1. **Try it on Windows**: `.\ooga examples\13_csharp.ooga` and `.\ooga --talk`. Press Ctrl+Shift+B in VS Code. Reinstall the VS Code colours (`vscode-ooga\pack.ps1`) for the new words.
+1. **Finish the Windows check**: `.\ooga --test examples tests\cases` already passes on Windows. Still to try there: `.\ooga --talk`, Ctrl+Shift+B in VS Code, and reinstalling the VS Code colours (`vscode-ooga\pack.ps1`) for the new words.
 2. **Write a bigger program yourself** (a text adventure with boxes for rooms, or a score tracker with files) and note what felt awkward.
 3. **Move from .NET 8 to .NET 10** before 10 November 2026: install the .NET 10 runtime, change `net8.0` to `net10.0` in `Directory.Build.props`, rebuild `bin`.
 4. Then the **Godot adapter**: a new project that implements `IOogaHost`, adds game actions through `RunOptions.Actions`, and turns `when` into engine events.

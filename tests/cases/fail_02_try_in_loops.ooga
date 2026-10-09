@@ -1,0 +1,18 @@
+me has log list
+each n in list 1 0 2 "x" 4
+    try
+        if kind of n is not "number"
+            fail "not a number: " + n
+        log gain 10 / n
+    oops why
+        log gain "bad (" + why + ")"
+say log
+
+# a problem inside oops goes to the next try outside
+try
+    try
+        fail "first"
+    oops why
+        fail "second after " + why
+oops why
+    say why

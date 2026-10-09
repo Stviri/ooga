@@ -1,0 +1,6 @@
+4
+
+ooga booga! problem in fail_03_nested_out_of_range.ooga line 3, column 10:
+    say item 3 of item 1 of grid
+             ^
+list has 2 things (1 to 2). no item 3.

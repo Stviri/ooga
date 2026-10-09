@@ -1,0 +1,6 @@
+hunters: list "grok" "zug"
+cooks: list "ugg"
+list "ugg" "new"
+deep
+box a (box b (box c "deep"))
+yes

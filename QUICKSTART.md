@@ -210,7 +210,39 @@ ooga> bye
 bye!
 ```
 
-## 8. Linux or macOS (optional)
+## 8. Check that everything still works
+
+Every example is also a test. Its expected output is in `examples\expected\`, and the answers it gets typed are in the `.in` file next to it.
+
+```text
+.\ooga --test examples tests\cases
+```
+
+```text
+ok     examples\01_hello.ooga
+ok     examples\02_calculator.ooga
+...
+ok     tests\cases\use_05_problem_while_running.ooga
+
+32 ok, 0 wrong.
+ooga happy.
+```
+
+If a script shows something different, ooga says `WRONG` and the first line that is different (`want:` and `got:`).
+
+**Make your own script a test:** put it in a folder (like `my_scripts`), then run
+
+```text
+.\ooga --test my_scripts --make-expected
+```
+
+This writes `my_scripts\expected\NAME.out` from what the script shows now. **Look at that file and check it is right.** From then on, `.\ooga --test my_scripts` tells you when the script changes.
+If your script uses `ask`, first put the answers (one per line) in `my_scripts\expected\NAME.in`.
+
+During a check, `random` always gives the same numbers, `wait` does not wait, and files are written to a fresh empty folder that is thrown away afterwards.
+You can get the same random numbers in a normal run too: `.\ooga --seed 1 examples\04_guess_number.ooga`.
+
+## 9. Linux or macOS (optional)
 
 You need .NET 8 or newer installed. Then:
 
@@ -218,7 +250,7 @@ You need .NET 8 or newer installed. Then:
 ./ooga.sh examples/01_hello.ooga
 ```
 
-## 9. For later: rebuilding and testing the engine
+## 10. For later: rebuilding and testing the engine
 
 You only need this if you change the C# code in `engine\`. It needs the **.NET 8 SDK** (or newer), not just the runtime.
 

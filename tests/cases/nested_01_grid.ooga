@@ -1,0 +1,16 @@
+# a 3 by 3 grid: lists inside a list
+me has grid list
+count r from 1 to 3
+    me has row list
+    count c from 1 to 3
+        row gain r * c
+    grid gain row
+say grid
+say item 2 of item 3 of grid
+item 2 of item 2 of grid is 0
+say item 2 of grid
+me has total 0
+each line in grid
+    each cell in line
+        total gain cell
+say total
