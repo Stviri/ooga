@@ -1,0 +1,17 @@
+# your player, in console form. (real "when me hit" come later with Godot)
+
+me is player
+
+me has health 100
+
+me can hit amount
+    health lose amount
+    say "ouch! health now " + health
+    if health is small or same 0
+        say "player die"
+        me die
+
+repeat 5
+    me hit 30
+
+say "this line never happen, because player die first"

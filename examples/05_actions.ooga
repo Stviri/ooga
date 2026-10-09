@@ -1,0 +1,20 @@
+# actions: teach me new things with "me can"
+# use them with "me <action>"
+
+me can greet who
+    say "ooga, " + who + "!"
+
+me can double x
+    give x * 2
+
+me can add a b
+    give a + b
+
+me greet "grok"
+me greet "zug"
+
+say me double 21
+say me add 2 3
+
+# when using an action's answer inside math, wrap it in ( )
+say (me double 5) + 1

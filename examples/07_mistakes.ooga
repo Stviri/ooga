@@ -1,0 +1,7 @@
+# this file has a mistake on purpose. run it to see how ooga tell you.
+# fix it, then run again.
+
+me has health 100
+
+health lose 10
+say heath

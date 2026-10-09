@@ -1,0 +1,6 @@
+# lines starting with # are notes. ooga ignore them.
+
+say "ooga booga"
+
+me has name ask "what your name?"
+say "hello " + name + ", welcome to cave."

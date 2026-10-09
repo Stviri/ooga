@@ -1,0 +1,54 @@
+{
+  "name": "Ooga",
+  "scopeName": "source.ooga",
+  "patterns": [
+    { "include": "#comment" },
+    { "include": "#string" },
+    { "include": "#action-def" },
+    { "include": "#action-call" },
+    { "include": "#number" },
+    { "include": "#keywords" }
+  ],
+  "repository": {
+    "comment": {
+      "match": "#.*$",
+      "name": "comment.line.number-sign.ooga"
+    },
+    "string": {
+      "begin": "\"",
+      "end": "\"",
+      "name": "string.quoted.double.ooga",
+      "patterns": [{ "match": "\\\\[n\"\\\\]", "name": "constant.character.escape.ooga" }]
+    },
+    "action-def": {
+      "match": "\\b(me)\\s+(can)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "variable.language.ooga" },
+        "2": { "name": "storage.type.ooga" },
+        "3": { "name": "entity.name.function.ooga" }
+      }
+    },
+    "action-call": {
+      "match": "\\b(me)\\s+(?!is\\b|has\\b|can\\b|die\\b)([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "variable.language.ooga" },
+        "2": { "name": "entity.name.function.ooga" }
+      }
+    },
+    "number": {
+      "match": "\\b[0-9]+(\\.[0-9]+)?\\b",
+      "name": "constant.numeric.ooga"
+    },
+    "keywords": {
+      "patterns": [
+        { "match": "\\b(if|else|repeat|while|count|from|to|stop|skip|give|wait|when)\\b", "name": "keyword.control.ooga" },
+        { "match": "\\b(has|can|is)\\b", "name": "storage.type.ooga" },
+        { "match": "\\b(and|or|not|same|big|small|gain|lose)\\b", "name": "keyword.operator.word.ooga" },
+        { "match": "\\b(yes|no|nothing)\\b", "name": "constant.language.ooga" },
+        { "match": "\\b(say|ask|random|die)\\b", "name": "support.function.ooga" },
+        { "match": "\\bme\\b", "name": "variable.language.ooga" },
+        { "match": "[+\\-*/]", "name": "keyword.operator.arithmetic.ooga" }
+      ]
+    }
+  }
+}

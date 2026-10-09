@@ -1,0 +1,20 @@
+# guess the number game
+
+me has secret random 1 to 10
+me has tries 0
+me has found no
+
+say "me think of number from 1 to 10. guess it!"
+
+repeat while found is no
+    me has guess ask "your guess?"
+    tries gain 1
+
+    if guess is secret
+        found is yes
+    else if guess is small secret
+        say "too small"
+    else
+        say "too big"
+
+say "yes! it was " + secret + ". you took " + tries + " tries."

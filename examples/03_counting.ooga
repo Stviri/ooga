@@ -1,0 +1,27 @@
+# loops: doing things many times
+
+say "repeat 3 times:"
+repeat 3
+    say "ooga"
+
+say "count up:"
+count i from 1 to 5
+    say i
+
+say "rocket launch:"
+count i from 3 to 1
+    say i
+    wait 1
+say "boom!"
+
+say "stop early:"
+count i from 1 to 100
+    if i is big 3
+        stop
+    say i
+
+say "skip number 2:"
+count i from 1 to 3
+    if i is 2
+        skip
+    say i

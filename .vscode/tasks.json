@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "run ooga file",
+      "type": "process",
+      "command": "${workspaceFolder}\\bin\\ooga.exe",
+      "args": ["${file}"],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "focus": true, "panel": "dedicated", "clear": true, "showReuseMessage": false },
+      "problemMatcher": []
+    }
+  ]
+}

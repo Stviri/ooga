@@ -1,0 +1,19 @@
+# simple calculator
+
+me has a ask "first number?"
+me has sign ask "what to do? (+ - * /)"
+me has b ask "second number?"
+
+if sign is "+"
+    say a + b
+else if sign is "-"
+    say a - b
+else if sign is "*"
+    say a * b
+else if sign is "/"
+    if b is 0
+        say "no can split by 0, silly"
+    else
+        say a / b
+else
+    say "ooga no know that sign"

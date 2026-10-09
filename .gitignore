@@ -1,0 +1,5 @@
+# build leftovers
+engine/obj/
+engine/bin/
+*.vsix
+bin/*.pdb

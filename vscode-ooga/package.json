@@ -1,0 +1,33 @@
+{
+  "name": "ooga-language",
+  "displayName": "Ooga",
+  "description": "Colors for the ooga language",
+  "publisher": "local",
+  "version": "0.0.1",
+  "engines": { "vscode": "^1.60.0" },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [
+      {
+        "id": "ooga",
+        "aliases": ["Ooga", "ooga"],
+        "extensions": [".ooga"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ooga",
+        "scopeName": "source.ooga",
+        "path": "./syntaxes/ooga.tmLanguage.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[ooga]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.detectIndentation": false
+      }
+    }
+  }
+}
