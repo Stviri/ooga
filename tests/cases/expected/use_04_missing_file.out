@@ -1,0 +1,5 @@
+
+ooga booga! problem in use_04_missing_file.ooga line 1, column 1:
+    use "lib/nope"
+    ^
+ooga no find file to use: "lib/nope"

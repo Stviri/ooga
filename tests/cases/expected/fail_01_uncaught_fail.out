@@ -1,0 +1,6 @@
+30
+
+ooga booga! problem in fail_01_uncaught_fail.ooga line 3, column 9:
+            fail "cave bank only has 50 shells, not " + amount
+            ^
+cave bank only has 50 shells, not 80

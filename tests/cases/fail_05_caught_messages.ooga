@@ -1,0 +1,26 @@
+# many different problems, each caught and shown
+me can attempt what
+    try
+        me call what
+    oops why
+        say why
+
+me can add_text
+    give 1 + yes
+
+me can bad_part
+    me has n 5
+    give health of n
+
+me can empty_pick
+    give me pick (list)
+
+me can bad_csharp
+    give me csharp "System.Math" "Sqrt" "a"
+
+me can too_deep
+    give item 5 of (list 1 (list 2))
+
+each a in list (action add_text) (action bad_part) (action empty_pick) (action bad_csharp) (action too_deep)
+    me attempt a
+say "all caught"

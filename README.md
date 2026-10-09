@@ -24,6 +24,12 @@ Needs Windows with the .NET 8 runtime (or newer).
 
 Or open the folder in VS Code, open a `.ooga` file, and press **Ctrl + Shift + B**.
 
+Check that every example still shows what it should:
+
+```text
+.\ooga --test examples tests\cases
+```
+
 Talk to ooga line by line:
 
 ```text
@@ -41,7 +47,7 @@ New here? Start with **[QUICKSTART.md](QUICKSTART.md)**. Every word is in **[OOG
 - `my_scripts/`: your own scripts
 - `bin/`: the ready-made `ooga.exe` runner (`ooga.cmd` and `ooga.sh` start it)
 - `engine/`: the C# interpreter
-- `tests/`: automatic checks for the interpreter
+- `tests/`: automatic checks for the interpreter (`tests/cases/` holds ooga scripts with their expected output)
 - `vscode-ooga/`: VS Code colors (run `pack.ps1` to install)
 
 ## How the engine is built

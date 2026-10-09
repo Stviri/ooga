@@ -1,0 +1,12 @@
+# a team: boxes inside a list, and a list inside each box
+me has team list (box name "grok" bag (list "club")) (box name "zug" bag (list))
+
+me can give_item who thing
+    bag of who gain thing
+
+me give_item (item 2 of team) "rock"
+me give_item (item 1 of team) "fire"
+each fighter in team
+    say name of fighter + " has " + size of bag of fighter + " things: " + (me join bag of fighter ", ")
+say team
+say item 2 of bag of item 1 of team

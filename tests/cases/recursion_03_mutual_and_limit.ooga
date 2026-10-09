@@ -1,0 +1,22 @@
+me can is_even n
+    if n is 0
+        give yes
+    give me is_odd (n - 1)
+
+me can is_odd n
+    if n is 0
+        give no
+    give me is_even (n - 1)
+
+say me is_even 100
+say me is_odd 7
+
+# an action with no way to stop: ooga gets dizzy, and try catches it
+me can forever n
+    give me forever (n + 1)
+
+try
+    me forever 1
+oops why
+    say why
+say "still alive"

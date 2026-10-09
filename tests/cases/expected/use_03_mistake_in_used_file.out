@@ -1,0 +1,5 @@
+
+ooga booga! problem in lib/broken.ooga line 2, column 18:
+        give first + secnd
+                     ^
+no thing called "secnd". you mean "second"?

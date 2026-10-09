@@ -1,0 +1,30 @@
+# actions that call themselves to walk through lists inside lists
+me can total_of thing
+    if kind of thing is "number"
+        give thing
+    me has sum 0
+    each part in thing
+        sum gain me total_of part
+    give sum
+
+me can flatten thing
+    me has out list
+    each part in thing
+        if kind of part is "list"
+            out is out + (me flatten part)
+        else
+            out gain part
+    give out
+
+me can depth thing
+    if kind of thing is not "list"
+        give 0
+    me has best 0
+    each part in thing
+        best is me biggest best (me depth part)
+    give best + 1
+
+me has tree list 1 (list 2 (list 3 4)) (list) 5
+say me total_of tree
+say me flatten tree
+say me depth tree

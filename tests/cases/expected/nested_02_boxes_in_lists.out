@@ -1,0 +1,4 @@
+grok has 2 things: club, fire
+zug has 1 things: rock
+list (box name "grok" bag (list "club" "fire")) (box name "zug" bag (list "rock"))
+fire

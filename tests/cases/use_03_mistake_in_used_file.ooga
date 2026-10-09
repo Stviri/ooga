@@ -1,0 +1,2 @@
+say "this never shows, because ooga checks every file first"
+use "lib/broken"

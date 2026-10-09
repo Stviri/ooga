@@ -1,0 +1,23 @@
+# a box used as a lookup, with lists inside. and boxes three deep.
+me has groups box
+
+me can join_group who group
+    if not groups has group
+        item group of groups is list
+    item group of groups gain who
+
+me join_group "grok" "hunters"
+me join_group "zug" "hunters"
+me join_group "ugg" "cooks"
+each g in groups
+    say g + ": " + item g of groups
+
+# copy makes a new box, but the lists inside are still shared
+me has other me copy groups
+item "cooks" of other gain "new"
+say item "cooks" of groups
+
+me has deep box a (box b (box c "deep"))
+say c of b of a of deep
+say deep
+say (list (list 1 2) (box x 1)) is (list (list 1 2) (box x 1))

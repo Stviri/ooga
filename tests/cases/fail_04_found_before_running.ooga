@@ -1,0 +1,6 @@
+say "this line never shows"
+me has bag list 1 2
+each x in bag
+    say x
+say bag has 1
+say bagg

@@ -280,6 +280,17 @@ Ooga can use anything C# and .NET have. Write the full C# name in quotes.
 - Generic types need the C# long name: `"System.Collections.Generic.List`1[System.String]"`.
 - Problems inside C# become ooga problems ("C# say problem: ...") that `try` can catch.
 
+## Checking your scripts
+
+| Command | What it does |
+|---|---|
+| `.\ooga --test examples` | runs every script in the folder and compares with `expected\NAME.out` |
+| `.\ooga --test my_scripts --make-expected` | writes the missing `expected\NAME.out` files (look at them!) |
+| `.\ooga --seed 7 game.ooga` | same `random` numbers every run |
+| `.\ooga --talk` | talk mode: type lines, see answers |
+
+Typed answers for a check go in `expected\NAME.in`, one per line. Words after the file name go in `expected\NAME.args`.
+
 ## Other
 
 | Ooga | Meaning |

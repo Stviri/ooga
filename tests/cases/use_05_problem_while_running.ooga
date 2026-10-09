@@ -1,0 +1,8 @@
+use "lib/risky"
+say me split_shells 10 2
+try
+    say me split_shells 10 0
+oops why
+    say "oops: " + why
+say me split_shells 1 0
+say "never"

@@ -1,0 +1,2 @@
+list 10 "bad (no can split by 0.)" 5 "bad (not a number: x)" 2.5
+second after first
