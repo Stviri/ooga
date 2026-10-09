@@ -8,6 +8,11 @@ say "me think of number from 1 to 10. guess it!"
 
 repeat while found is no
     me has guess ask "your guess?"
+
+    if kind of guess is not "number"
+        say "that not a number. try again."
+        skip
+
     tries gain 1
 
     if guess is secret

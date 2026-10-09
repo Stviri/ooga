@@ -1,0 +1,25 @@
+# boxes: one thing with named parts. good for players, enemies, items.
+
+me has player box name "grok" health 100 club no
+
+me can hit who amount
+    health of who lose amount
+    say name of who + " get hit. health now " + health of who
+    if health of who is small or same 0
+        say name of who + " is down!"
+
+me can pick_up who thing
+    item thing of who is yes
+    say name of who + " pick up " + thing
+
+say player
+me hit player 30
+me pick_up player "club"
+say "has club? " + club of player
+
+# boxes inside a list: a team
+me has team list player (box name "zug" health 50 club no)
+each fighter in team
+    me hit fighter 60
+
+say team

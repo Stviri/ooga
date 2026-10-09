@@ -6,15 +6,15 @@ me has things 0
 me has shopping yes
 
 # how many shells a thing cost. "nothing" means ooga no sell it.
-me can price item
-    if item is 1
+me can price choice
+    if choice is 1
         give 5
-    if item is 2
+    if choice is 2
         give 2
     give nothing
 
-me can name_of item
-    if item is 1
+me can name_of choice
+    if choice is 1
         give "club"
     give "rock"
 

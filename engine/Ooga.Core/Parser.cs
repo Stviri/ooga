@@ -8,10 +8,11 @@ public class Parser
         "me", "is", "has", "can", "die", "say", "if", "else", "repeat", "while", "count", "from", "to",
         "stop", "skip", "give", "wait", "when", "and", "or", "not", "same", "big", "small",
         "yes", "no", "nothing", "ask", "random", "gain", "lose",
+        "list", "box", "of", "item", "size", "kind", "each", "in", "try", "oops", "fail", "use", "action",
     };
 
     // Words that can start a line. Used for "you mean ...?" hints.
-    static readonly string[] LineStarters = { "say", "if", "else", "repeat", "count", "stop", "skip", "give", "wait", "me" };
+    static readonly string[] LineStarters = { "say", "if", "else", "repeat", "count", "each", "stop", "skip", "give", "wait", "try", "fail", "use", "item", "me" };
 
     readonly List<Token> t;
     int p;
@@ -21,9 +22,17 @@ public class Parser
     public static OogaProgram Parse(List<Token> tokens)
     {
         var parser = new Parser(tokens);
-        var program = new OogaProgram { Line = 1, Col = 1 };
-        while (parser.Peek().Kind != Tok.End)
-            program.Body.Add(parser.ParseStatement(top: true));
+        var program = new OogaProgram { Line = 1, Col = 1, File = tokens.Count > 0 ? tokens[0].File : null };
+        try
+        {
+            while (parser.Peek().Kind != Tok.End)
+                program.Body.Add(parser.ParseStatement(top: true));
+        }
+        catch (OogaError e)
+        {
+            e.File ??= program.File;
+            throw;
+        }
         return program;
     }
 
@@ -39,6 +48,7 @@ public class Parser
     {
         node.Line = tk.Line;
         node.Col = tk.Col;
+        node.File = tk.File;
         return node;
     }
 
@@ -68,7 +78,7 @@ public class Parser
         if (tk.Kind is Tok.End or Tok.Dedent) return;
         if (IsWord(tk, "me"))
             throw Err(tk, "ooga confused by me here. to give an action's answer to other action, wrap it in ( ), like: me double (me double 2)");
-        if (tk.Kind == Tok.Symbol && "+-*/".Contains(tk.Value))
+        if (tk.Kind == Tok.Symbol && "+-*/%".Contains(tk.Value))
             throw Err(tk, $"ooga confused by {tk} here. if this math is for an action, put ( ) around it, like: me hit (5 + 1)");
         throw Err(tk, $"ooga confused by {tk} here. too many things on this line?");
     }
@@ -160,6 +170,47 @@ public class Parser
                 stmt = At(new WaitStmt { Seconds = ParseExpr() }, tk);
                 break;
 
+            case "each":
+            {
+                Next();
+                string name = ExpectName("a name for each thing, like: each x in bag");
+                ExpectWord("in", $"each need \"in\" next, like: each {name} in bag");
+                if (AtLineEnd()) throw Err(Peek(), $"each {name} in what? like: each {name} in bag");
+                var source = ParseExpr();
+                return At(new EachStmt { Name = name, Source = source, Body = ParseBlock(tk, "each") }, tk);
+            }
+
+            case "try":
+            {
+                Next();
+                var body = ParseBlock(tk, "try");
+                if (!IsWord(Peek(), "oops"))
+                    throw Err(tk, "try need oops right after its lines, to say what to do when something go wrong. like:\ntry\n    ...\noops why\n    say why");
+                var oopsTok = Next();
+                string name = Peek().Kind == Tok.Word ? ExpectName("a name for the problem, like: oops why") : null;
+                return At(new TryStmt { Body = body, OopsName = name, Oops = ParseBlock(oopsTok, "oops") }, tk);
+            }
+
+            case "oops":
+                throw Err(tk, "oops here, but no try right above it.");
+
+            case "fail":
+                Next();
+                if (AtLineEnd()) throw Err(Peek(), "fail need a reason, like: fail \"health no can be below 0\"");
+                stmt = At(new FailStmt { Message = ParseExpr() }, tk);
+                break;
+
+            case "use":
+                Next();
+                if (!top) throw Err(tk, "use must be at left edge, not inside other block.");
+                if (Peek().Kind != Tok.Text) throw Err(Peek(), "use need a file name in quotes, like: use \"tools.ooga\"");
+                stmt = At(new UseStmt { Path = Next().Value }, tk);
+                break;
+
+            case "item":
+                stmt = ParseChange(tk);
+                break;
+
             case "when":
                 throw Err(tk, "\"when\" is for game things (like getting hit). it come later with Godot. for now, use \"me can\".");
 
@@ -167,37 +218,53 @@ public class Parser
             {
                 if (Keywords.Contains(tk.Value))
                     throw Err(tk, $"\"{tk.Value}\" no can start a line.");
-                Next();
-                string name = tk.Value;
-                var verb = Peek();
-                if (IsWord(verb, "is"))
-                {
-                    Next();
-                    var after = Peek();
-                    if (IsWord(after, "same") || IsWord(after, "big") || IsWord(after, "small") || IsWord(after, "not"))
-                        throw Err(after, $"this look like a check. checks go after if, like: if {name} is {after.Value} 5");
-                    if (AtLineEnd()) throw Err(after, $"{name} is what? like: {name} is 5");
-                    stmt = At(new SetStmt { Name = name, Value = ParseExpr() }, tk);
-                }
-                else if (IsWord(verb, "gain") || IsWord(verb, "lose"))
-                {
-                    Next();
-                    if (AtLineEnd()) throw Err(Peek(), $"{name} {verb.Value} how much? like: {name} {verb.Value} 1");
-                    stmt = At(new ChangeStmt { Name = name, Gain = verb.Value == "gain", Amount = ParseExpr() }, tk);
-                }
-                else
-                {
-                    string hint = Spelling.Suggest(name, LineStarters);
-                    if (hint != null)
-                        throw Err(tk, $"ooga no know \"{name}\". you mean {hint}?");
-                    throw Err(tk, $"what to do with {name}? try \"{name} is 5\", \"{name} gain 1\", or \"say {name}\".");
-                }
+                stmt = ParseChange(tk);
                 break;
             }
         }
 
         ExpectLineEnd();
         return stmt;
+    }
+
+    // health is 5 / health gain 1 / health of player lose 2 / item 2 of bag is "x"
+    Stmt ParseChange(Token tk)
+    {
+        var target = ParsePrimary();
+        string name = target switch
+        {
+            NameExpr n => n.Name,
+            PartExpr pe => pe.Part + " of ...",
+            _ => "item ... of ...",
+        };
+        var verb = Peek();
+        if (IsWord(verb, "is"))
+        {
+            Next();
+            var after = Peek();
+            if (IsWord(after, "same") || IsWord(after, "big") || IsWord(after, "small") || IsWord(after, "not"))
+                throw Err(after, $"this look like a check. checks go after if, like: if {name} is {after.Value} 5");
+            if (AtLineEnd()) throw Err(after, $"{name} is what? like: {name} is 5");
+            return At(new SetStmt { Target = target, Value = ParseExpr() }, tk);
+        }
+        if (IsWord(verb, "gain") || IsWord(verb, "lose"))
+        {
+            Next();
+            if (AtLineEnd()) throw Err(Peek(), $"{name} {verb.Value} how much? like: {name} {verb.Value} 1");
+            return At(new ChangeStmt { Target = target, Gain = verb.Value == "gain", Amount = ParseExpr() }, tk);
+        }
+        if (IsWord(verb, "has"))
+            throw Err(verb, $"this look like a check. checks go after if, like: if {name} has 5");
+        if (target is NameExpr)
+        {
+            string hint = Spelling.Suggest(tk.Value, LineStarters);
+            if (hint != null)
+                throw Err(tk, $"ooga no know \"{tk.Value}\". you mean {hint}?");
+        }
+        if (target is NameExpr)
+            throw Err(tk, $"what to do with {name}? try \"{name} is 5\", \"{name} gain 1\", or \"say {name}\".");
+        throw Err(verb.Kind is Tok.Newline or Tok.End or Tok.Dedent ? tk : verb,
+            $"what to do with {name}? try \"is\", \"gain\" or \"lose\" after it.");
     }
 
     Stmt ParseMe(bool top)
@@ -316,6 +383,12 @@ public class Parser
     Expr ParseCompare()
     {
         var left = ParseSum();
+        if (IsWord(Peek(), "has"))
+        {
+            var hasTok = Next();
+            if (AtLineEnd()) throw Err(Peek(), "has what? like: if bag has 5");
+            return At(new HasExpr { Holder = left, Item = ParseSum() }, hasTok);
+        }
         if (!IsWord(Peek(), "is")) return left;
 
         var isTok = Next();
@@ -368,7 +441,7 @@ public class Parser
     Expr ParseTerm()
     {
         var left = ParseUnary();
-        while (IsSym(Peek(), "*") || IsSym(Peek(), "/"))
+        while (IsSym(Peek(), "*") || IsSym(Peek(), "/") || IsSym(Peek(), "%"))
         {
             var op = Next();
             left = At(new MathExpr { Op = op.Value, Left = left, Right = ParseUnary() }, op);
@@ -389,7 +462,7 @@ public class Parser
     bool StartsArg(Token tk) =>
         tk.Kind is Tok.Number or Tok.Text
         || IsSym(tk, "(")
-        || (tk.Kind == Tok.Word && (!Keywords.Contains(tk.Value) || tk.Value is "yes" or "no" or "nothing"));
+        || (tk.Kind == Tok.Word && (!Keywords.Contains(tk.Value) || tk.Value is "yes" or "no" or "nothing" or "size" or "kind" or "item" or "action"));
 
     CallExpr ParseCallAfterMe(Token me)
     {
@@ -442,10 +515,74 @@ public class Parser
                     case "me":
                         Next();
                         return ParseCallAfterMe(tk);
+                    case "list":
+                    {
+                        Next();
+                        var list = At(new ListExpr(), tk);
+                        while (StartsArg(Peek()))
+                            list.Items.Add(ParsePrimary());
+                        return list;
+                    }
+                    case "box":
+                    {
+                        Next();
+                        var box = At(new BoxExpr(), tk);
+                        while (Peek().Kind == Tok.Word && !Keywords.Contains(Peek().Value))
+                        {
+                            var partTok = Next();
+                            if (box.Parts.Any(p => p.Name == partTok.Value))
+                                throw Err(partTok, $"box already has part {partTok.Value}. each part only once.");
+                            if (!StartsArg(Peek()))
+                                throw Err(Peek(), $"box part {partTok.Value} need a value, like: box {partTok.Value} 0");
+                            box.Parts.Add((partTok.Value, ParsePrimary()));
+                        }
+                        return box;
+                    }
+                    case "action":
+                    {
+                        Next();
+                        var nameTok = Peek();
+                        if (nameTok.Kind != Tok.Word || (Keywords.Contains(nameTok.Value) && nameTok.Value != "die"))
+                            throw Err(nameTok, "action which? like: action double");
+                        Next();
+                        return At(new ActionRefExpr { Name = nameTok.Value }, tk);
+                    }
+                    case "size":
+                    case "kind":
+                    {
+                        Next();
+                        ExpectWord("of", $"{tk.Value} need \"of\" next, like: {tk.Value} of bag");
+                        var inner = ParsePrimary();
+                        return tk.Value == "size" ? At(new SizeExpr { Inner = inner }, tk) : At(new KindExpr { Inner = inner }, tk);
+                    }
+                    case "item":
+                    {
+                        Next();
+                        if (!StartsArg(Peek())) throw Err(Peek(), "item which? like: item 1 of bag");
+                        // "item k of bag": a plain name right after item is the position, never "k of bag".
+                        // (to use a part as the position, wrap it: item (pos of p) of bag)
+                        Expr index;
+                        if (Peek().Kind == Tok.Word && !Keywords.Contains(Peek().Value) && IsWord(Peek(1), "of"))
+                        {
+                            var nameTok = Next();
+                            index = At(new NameExpr { Name = nameTok.Value }, nameTok);
+                        }
+                        else
+                        {
+                            index = ParsePrimary();
+                        }
+                        ExpectWord("of", "item need \"of\" next, like: item 1 of bag");
+                        return At(new ItemExpr { Index = index, Holder = ParsePrimary() }, tk);
+                    }
                 }
                 if (Keywords.Contains(tk.Value))
                     throw Err(tk, $"ooga expect a value here, but got \"{tk.Value}\".");
                 Next();
+                if (IsWord(Peek(), "of"))
+                {
+                    Next();
+                    return At(new PartExpr { Part = tk.Value, Holder = ParsePrimary() }, tk);
+                }
                 return At(new NameExpr { Name = tk.Value }, tk);
 
             case Tok.Newline:

@@ -1,0 +1,12 @@
+# a file of helpers. another file brings them in with: use "tools/cave_tools"
+
+me has cave_name "big cave"
+
+me can shout words
+    give (me upper words) + "!"
+
+me can stars count_of
+    me has line ""
+    repeat count_of
+        line gain "*"
+    give line

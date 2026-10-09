@@ -1,15 +1,13 @@
 # Ooga Progress
 
-Last updated: 2026-10-09, branch `main-kp3dyi`.
+Last updated: 2026-10-09, branch `main-kp3dyi` (pull request #1).
 
 ## Where things stand
 
-The standalone language core is done and tested: a C# command-line interpreter that runs `.ooga` files in a console.
-Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
+Ooga is a general-purpose language now, still in caveman style, run by a C# interpreter.
+It has lists, boxes (named parts), loops over them, problem catching, more than one file, a library of ready-made actions, actions as values, an interactive talk mode, and a door into all of C# and .NET.
 
-The interpreter was already C# (.NET 8) before this round. It was kept and built on, not rewritten.
-The same lexer, parser, checker and interpreter design remains. They were moved into their own projects and hardened.
-An older idea of writing the ooga compiler in GDScript is dropped. C# is the direction.
+Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 
 ## Tools used
 
@@ -21,83 +19,92 @@ An older idea of writing the ooga compiler in GDScript is dropped. C# is the dir
 | `global.json` | SDK 8.0.100, `rollForward: latestMajor` | builds with SDK 8 or any newer SDK |
 | Test framework | xunit 2.9.2, Microsoft.NET.Test.Sdk 17.11.1 | |
 
-**.NET 8 support ends on 10 November 2026.** Moving the target to `net10.0` (the current long-term release) is a small change. But the user would need the .NET 10 runtime installed first. See "Next recommended task".
+**.NET 8 support ends on 10 November 2026.** See "Next recommended tasks".
 
 ## Implemented
 
-| Feature | Ooga words |
+| Area | Ooga words |
 |---|---|
 | Things (variables) | `me has x 5`, `x is 6`, `x gain 1`, `x lose 1`, text `gain` joins |
-| Numbers | `5`, `3.5`, negative with `-`; shown without extra zeros |
-| Text | `"hi"`, escapes `\"` `\n` `\\`; `+` with text joins |
-| yes/no and nothing | `yes`, `no`, `nothing` |
-| Math | `+ - * /`, `( )`, minus in front; school order (see rulebook) |
-| Checks | `is`, `is same`, `is not`, `is big`, `is small`, `is big or same`, `is small or same`, `and`, `or`, `not` |
+| Values | numbers, text (`\"` `\n` `\t` `\\`), `yes`/`no`, `nothing`, lists, boxes, actions, C# things |
+| Math | `+ - * / %`, `( )`, minus in front; school order (see rulebook) |
+| Checks | `is`, `is same`, `is not`, `is big`, `is small`, `is big or same`, `is small or same`, `has`, `kind of`, `and`, `or`, `not`; texts compare in letter order; lists and boxes compare by what is inside |
 | Conditions | `if` / `else if` / `else`, nested to any depth |
-| Loops | `repeat N`, `repeat while`, `count i from A to B` (up or down), `stop`, `skip` |
-| Actions | `me can name a b` with things, `give` answers, recursion, usable before the line that teaches them |
-| Scope | file things vs. action things; action things hide file things of the same name |
-| Console | `say`, `ask`, `random A to B`, `wait N`, `me die` |
+| Loops | `repeat N`, `repeat while`, `count i from A to B`, `each x in bag`, `stop`, `skip` |
+| Lists | `list 1 2 3`, `item N of bag` (read and change), `size of`, `gain` / `lose`, `has`, lists inside lists |
+| Boxes | `box name "grok" health 100`, `health of player` (read, change, add), boxes inside boxes, `item "key" of box` lookups |
+| Actions | `me can name a b`, `give`, recursion, use before teaching, shared lists and boxes can be changed |
+| Actions as values | `action double`, `me call f ...`, `keep`, `change_each`, `sort_by` |
+| Problems | `try` / `oops why`, `fail "reason"`; safety stops (`ooga tired`) and `me die` can not be caught |
+| More files | `use "tools"` (each file once; errors name the right file) |
+| Library | round, round_to, round_down, round_up, positive, power, root, biggest, smallest, numbers, upper, lower, trim, split, join, replace, starts_with, ends_with, number, text, piece, find, reverse, sort, take, put_at, keys, copy, pick, shuffle, call, keep, change_each, sort_by, time, date, arguments, read_file, write_file, add_to_file, file_exists |
+| C# door | `csharp`, `csharp_new`, `csharp_call`, `csharp_get`, `csharp_set`; values convert both ways; ooga actions become C# delegates; generic methods and LINQ work |
+| Console | `say`, `ask`, `random A to B`, `wait N`, `me die`, `me arguments` |
+| Talk mode | `ooga --talk`: type pieces, things are kept, a value alone is shown |
 | Errors | file, line, column, the code line, a `^` pointer, caveman message, "you mean ...?" hints |
-| Safety | step limit and cancellation (used by tests, ready for engines), recursion limit, big stack |
+| Safety | step limit and cancellation, recursion limit, big stack, cycle-safe showing of lists |
 
 ### Engine layout (the boundary)
 
-- `engine/Ooga.Core`: the language only. It talks to the outside through `IOogaHost` (`Say`, `Ask`, `Wait`).
-- `engine/Ooga.Cli`: the `ooga` command. It provides `ConsoleHost` and turns errors into the console report.
-- Future engine adapters: new projects that give the core their own `IOogaHost`. `when` and `me is` are kept for them.
-  `when` gives a clear "come later" error today. `me is` is accepted and does nothing in the console.
+- `engine/Ooga.Core`: the language only. It talks to the outside through `IOogaHost` (`Say`, `Ask`, `Wait`) and, if the host has files, `IOogaFiles`.
+  A host can add its own actions with `RunOptions.Actions` (`OogaAction`). This is how a game engine adapter will add things like `jump` or `play_sound`.
+  `RunOptions.AllowCSharp = false` turns the C# door off (for example inside a game where scripts should not touch the computer).
+- `engine/Ooga.Cli`: the `ooga` command. It provides `ConsoleHost` (console + files), talk mode, and the error printout.
+- `when` and `me is` are kept for engine adapters. `when` gives a clear "come later" error today.
 
 ## Decisions made (and why)
 
-1. **No new syntax was needed.** Every required feature already had an ooga form, so the grammar is unchanged.
-2. **Things handed to an action are single values.** `me f n - 1` means `(me f n) - 1`. This was already how the parser worked, and it keeps `say (me double 5) + 1` meaningful. It is now written clearly in the rulebook. There are also targeted error hints: math after a call (`me show x + 2`), an action's answer handed to another action without `( )`, and recursion that never ends.
-3. **`ask` only turns plain numbers into numbers** (`5`, `-3`, `2.5`). Before, words like `NaN` and `Infinity` and forms like `1e5` became numbers. Now they stay text.
-4. **`ask` after the input has ended is an error**, not an empty answer. This stops a `repeat while` + `ask` loop from running forever when input is piped in.
-5. **Math that becomes infinitely big is an error** ("number too big for ooga") instead of printing `∞`.
-6. **Errors go to the error stream (stderr)** and include the column. Exit codes are 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
-7. **Typo hints**: swapped letters count as one typo (`sya` → `say`). Names of 3 letters or fewer only get a hint when one letter is off, so `x` never suggests `hp`. Capital letters are noticed (`Say` → `say`).
-8. **Count things stay after the loop** at file level (`count i ...` then `say i` shows the last value). This is existing behaviour, kept and tested.
-9. **A byte-order mark** (an invisible mark some Windows editors add) at the start of a file is ignored.
-10. **The runner is framework-dependent** (small, needs the .NET runtime) like before, built for `win-x64`.
+1. **No change to the old syntax.** Every v1 program still runs the same, except that it now can't use the new special words as names (see 2).
+2. **New special words:** `list box of item size kind each in try oops fail use action`. The only clash in this repository was the parameter `item` in `08_shop`, which is now `choice`. Old scripts that use any of these words as names must rename them; ooga says exactly which line.
+3. **Ready-made actions use the existing action form** (`me round 2.5`), so no new grammar was needed for the library. Their names are reserved as action names only. Things may still be called `round` or `text`.
+4. **Positions start at 1** (`item 1 of bag`), like `count i from 1`.
+5. **Lists and boxes are shared, not copied**, like in C#. An action can change the player box it was given. `me copy` makes a separate one.
+6. **`item k of bag`**: a plain name right after `item` is the position, never `k of bag`. Use `( )` for anything else.
+7. **Things handed to an action are single values** (unchanged): `me f (n - 1)`, `me shout ("hi " + name)`. The same rule applies to list items (`list 1 (-2)`).
+8. **`%` is "what is left over"**, and never goes below 0 when splitting by a number above 0 (`-7 % 3` is `2`).
+9. **`try` can not catch** `ooga tired` (the step limit), cancellation, or `me die`. A runaway program can always be stopped.
+10. **C# door rules:** objects made with `csharp_new` stay live C# objects, even collections. Results of calls and properties that are sequences become ooga lists, and dictionaries become boxes. Numbers go to `int` / `long` / ... only when they are whole and fit.
+11. **Talk mode** lets an action be taught again (handy while trying things). Files still forbid it.
+12. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
 
-## Limitations (known, not bugs)
+## Limitations (known)
 
-- No lists, no remainder (`%`), no rounding, no "is this a number?" check. So `04_guess_number` stops with an error if you type a word instead of a number.
-- No way to read files or split a script over several files.
-- `when` events, `me is`, and anything about players, enemies or scenes need a game engine adapter. None exists yet.
-- Text checks can only be same or not same (no alphabetical big/small).
+- No classes or "kinds" with their own actions. Use boxes plus actions that take the box.
+- C# door: no `ref` / `out` parameters, no indexers by name (use `get_Item`), no events, no generic **types** without the long name (`` List`1[System.String] ``), and no extension methods called as `x.Method()` (call them on their static class, like `System.Linq.Enumerable`).
+- Lists of C# things returned by C# are copies. Changing them does not change the C# object.
+- Whole numbers are exact up to 9,007,199,254,740,992 (ooga numbers are C# `double`).
 - `wait` blocks the whole program (fine for the console, an engine adapter will handle it differently).
-- Using a file thing before its `me has` line has run is caught **while running**, not before. For example, an action called above the `me has` line it uses.
-- `bin\ooga.exe` was built on Linux for Windows. It is a valid Windows x64 program, but it has **not been run on Windows** in this round. The same build's `ooga.dll` was run on Linux and works.
+- `when` events, `me is`, players, enemies and scenes need a game engine adapter. None exists yet.
+- Using a file thing before its `me has` line has run is caught **while running**, not before.
+- `bin\ooga.exe` was built on Linux for Windows. It is a valid Windows x64 program, but it has **not been run on Windows**. The same build's `ooga.dll` was run on Linux for every example and for talk mode.
 
 ## Tests run
 
-Command: `dotnet test Ooga.sln --blame-hang-timeout 2m` (on Linux, .NET SDK 8.0.131, after a clean rebuild).
+Command: `dotnet test Ooga.sln --blame-hang-timeout 2m` (on Linux, .NET SDK 8.0.131).
 
-Result: **246 passed, 0 failed, 0 skipped** (about 1 second).
+Result: **461 passed, 0 failed, 0 skipped** (about 1 second).
 
-What they cover (in `tests/Ooga.Tests`):
+| Test file | What it covers |
+|---|---|
+| `LexerParserTests` | tokens, positions, push-in, notes, line endings, parse shapes, precedence in the tree |
+| `ExecutionTests` | values, math and precedence, checks, nested conditions, loops, `ask` / `wait` / `random` / `me die` |
+| `ActionAndScopeTests` | actions, answers, recursion, scope (inside vs. file, hiding, recursion frames) |
+| `CollectionTests` | lists, boxes, items, parts, `each`, `has`, sharing, text letters, `kind of`, `%` |
+| `LibraryTests` | every ready-made action, files, arguments, host-added actions, library mistakes |
+| `TryUseBridgeTests` | `try` / `oops` / `fail`, `use`, the C# door, and 27 new wrong programs with exact line and column |
+| `ActionValueTests` | actions as values, `keep` / `change_each` / `sort_by`, ooga actions as C# delegates, LINQ |
+| `TalkTests` | talk sessions and `ooga --talk` |
+| `ErrorTests` | 70 wrong programs with exact line, column and message, and the full error report |
+| `SafetyTests` | endless loops stop, cancellation, 20,000-deep recursion |
+| `ExampleAndCliTests` | every file in `examples/` through the real `ooga` command, with exact output; CLI behaviour |
 
-- `LexerParserTests`: tokens, positions, push-in, notes, Windows line endings, parse shapes, precedence in the tree.
-- `ExecutionTests`: values and how they show, math and precedence, all checks, conditions (nested, else matching), all loops, `stop` / `skip` in nested loops, `ask` / `wait` / `random` / `me die`.
-- `ActionAndScopeTests`: things, answers, early `give`, recursion (factorial, fibonacci, two actions calling each other), scope (inside vs. file, hiding, recursion frames, count inside actions).
-- `ErrorTests`: 70 wrong programs, each checked for the exact line, column and message, plus the full error report text.
-- `SafetyTests`: endless loops stop at the step limit or on cancel; 20,000-deep recursion does not crash.
-- `ExampleAndCliTests`: every file in `examples/` runs through the real `ooga` command with typed answers and exact expected output; usage, missing file, stderr, exit codes, byte-order mark, input ending.
+Every test runs with a 10-second wall-clock limit and a 2,000,000-step limit.
 
-Every test runs with a 10-second wall-clock limit and a 2,000,000-step limit. The test run itself uses `--blame-hang-timeout 2m`.
+Also checked by hand with the published `bin/ooga.dll`: all 15 examples (exit code 0, and 1 for `07_mistakes` on purpose) and a talk-mode session.
 
-Also checked by hand: `bin/ooga.dll` (the published runner) runs examples 01, 02, 05, 07, 08 and 09 on Linux with the output shown in `QUICKSTART.md`.
+## Next recommended tasks
 
-## Next recommended task
-
-**Try it on Windows and write your own scripts.** Run `.\ooga examples\01_hello.ooga` and press Ctrl+Shift+B in VS Code to confirm the rebuilt `ooga.exe` works. Then write 2–3 small programs in `my_scripts\` and note every place ooga felt awkward.
-
-After that, the most useful language additions, all small and in the same style, are:
-
-1. a number check for `ask` answers (so games do not stop when you type a word),
-2. remainder (for "every 3rd" without counters),
-3. lists.
-
-Before 10 November 2026: move from .NET 8 to .NET 10 (install the .NET 10 runtime on the PC, change `net8.0` to `net10.0` in `Directory.Build.props`, rebuild `bin`).
+1. **Try it on Windows**: `.\ooga examples\13_csharp.ooga` and `.\ooga --talk`. Press Ctrl+Shift+B in VS Code. Reinstall the VS Code colours (`vscode-ooga\pack.ps1`) for the new words.
+2. **Write a bigger program yourself** (a text adventure with boxes for rooms, or a score tracker with files) and note what felt awkward.
+3. **Move from .NET 8 to .NET 10** before 10 November 2026: install the .NET 10 runtime, change `net8.0` to `net10.0` in `Directory.Build.props`, rebuild `bin`.
+4. Then the **Godot adapter**: a new project that implements `IOogaHost`, adds game actions through `RunOptions.Actions`, and turns `when` into engine events.

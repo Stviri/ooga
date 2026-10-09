@@ -1,0 +1,33 @@
+# try and oops: do something that might go wrong, and say what to do if it does.
+# files: remember things after the program ends.
+
+me has save "cave_save.txt"
+me has best 0
+
+# read the old best score (the first time there is no file yet)
+try
+    best is me number (me read_file save)
+oops why
+    say "no save yet (" + why + ")"
+
+say "old best: " + best
+
+me has score random 1 to 100
+say "this time: " + score
+
+if score is big best
+    say "new best!"
+    me write_file save score
+else
+    say "not better. best is still " + best
+
+# fail makes your own problem
+me can check_age age
+    if age is small 0
+        fail "age no can be below 0, but got " + age
+    give age
+
+try
+    me check_age (-5)
+oops why
+    say "caught: " + why

@@ -6,13 +6,23 @@ public class OogaError : Exception
     public int Line { get; }
     public int Col { get; }
 
+    // Which script file the problem is in (null = the main file), and that file's text (for showing the line).
+    public string File { get; set; }
+    public string SourceText { get; set; }
+
+    // "try" / "oops" can catch this problem. Safety stops (like "ooga tired") can not be caught.
+    public bool CanCatch { get; init; } = true;
+
     public OogaError(int line, int col, string message) : base(message)
     {
         Line = line;
         Col = col;
     }
 
-    public OogaError(Node at, string message) : this(at.Line, at.Col, message) { }
+    public OogaError(Node at, string message) : this(at.Line, at.Col, message) { File = at.File; }
+
+    // Report using the file name and text remembered in the error.
+    public ErrorReport Report() => Report(File ?? "script", SourceText ?? "");
 
     // The error as the user sees it:
     //

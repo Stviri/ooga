@@ -52,6 +52,12 @@ hello Grok, welcome to cave.
 | `.\ooga examples\07_mistakes.ooga` | what an error looks like |
 | `.\ooga examples\08_shop.ooga` | actions, loops, checks and `ask` together |
 | `.\ooga examples\09_fizzbuzz.ooga` | counters and joining text |
+| `.\ooga examples\10_lists.ooga` | lists: `list`, `item`, `size of`, `each`, `has` |
+| `.\ooga examples\11_boxes.ooga` | boxes: a player with named parts |
+| `.\ooga examples\12_try_and_files.ooga` | `try` / `oops`, `fail`, saving a best score to a file |
+| `.\ooga examples\13_csharp.ooga` | the C# door: using .NET from ooga |
+| `.\ooga examples\14_action_values.ooga` | handing actions to other actions |
+| `.\ooga examples\15_use.ooga` | bringing in another file with `use` |
 
 What you should see:
 
@@ -103,6 +109,46 @@ bye! you leave with 18 shells and 1 things.
 1 2 fizz 4 buzz fizz 7 8 fizz buzz 11 fizz 13 14 fizzbuzz
 ```
 
+**10_lists** (the letters at the end are shown on one line here):
+
+```text
+scores: list 40 75 12
+how many: 3
+first: 40
+now: list 40 75 99
+total: 214
+best: 99
+sorted: list 40 75 99
+someone got 99!
+fixed: list 41 75 99
+o o g a
+```
+
+**11_boxes**:
+
+```text
+box name "grok" health 100 club no
+grok get hit. health now 70
+grok pick up club
+has club? yes
+grok get hit. health now 10
+zug get hit. health now -10
+zug is down!
+list (box name "grok" health 10 club yes) (box name "zug" health (-10) club no)
+```
+
+**13_csharp**:
+
+```text
+12
+3.14
+ooga booga
+7
+CAVEMAN
+list "rock" "stick" "fire"
+list 20 30
+```
+
 ## 5. When something is wrong
 
 ```text
@@ -143,7 +189,28 @@ health left: 70
 
 Every word you can use is in [OOGA_RULEBOOK.md](OOGA_RULEBOOK.md).
 
-## 7. Linux or macOS (optional)
+## 7. Talk to ooga line by line
+
+```text
+.\ooga --talk
+```
+
+Type a line and press Enter. A value alone is shown right away. Lines that start a block (`if`, `repeat`, `count`, `each`, `try`, `me can`) continue until you press Enter on an empty line. Type `bye` to leave.
+
+```text
+ooga> me has x 5
+ooga> x + 1
+6
+ooga> me can double n
+....>     give n * 2
+....>
+ooga> me double x
+10
+ooga> bye
+bye!
+```
+
+## 8. Linux or macOS (optional)
 
 You need .NET 8 or newer installed. Then:
 
@@ -151,7 +218,7 @@ You need .NET 8 or newer installed. Then:
 ./ooga.sh examples/01_hello.ooga
 ```
 
-## 8. For later: rebuilding and testing the engine
+## 9. For later: rebuilding and testing the engine
 
 You only need this if you change the C# code in `engine\`. It needs the **.NET 8 SDK** (or newer), not just the runtime.
 

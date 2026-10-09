@@ -1,0 +1,7 @@
+# use brings in actions and things from another file.
+# the path is from the folder this file is in.
+
+use "tools/cave_tools"
+
+say me shout ("welcome to " + cave_name)
+say me stars 5
