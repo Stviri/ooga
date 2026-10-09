@@ -1,0 +1,5 @@
+me has player box name "grok" health 100
+health of player lose 30
+speed of player is 5
+say name of player + " has " + health of player
+say speed of player

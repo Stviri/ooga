@@ -1,0 +1,14 @@
+repeat 2
+    say "ooga"
+count i from 1 to 3
+    say i
+count i from 3 to 1
+    say i
+me has n 0
+repeat while n is small 10
+    n gain 3
+    if n is 6
+        skip
+    if n is 9
+        stop
+    say n

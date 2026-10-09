@@ -84,7 +84,7 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 
 Command: `dotnet test Ooga.sln --blame-hang-timeout 2m` (on Linux, .NET SDK 8.0.131).
 
-Result: **506 passed, 0 failed, 0 skipped** (about 1 second).
+Result: **530 passed, 0 failed, 0 skipped** (about 2 seconds).
 
 Also: `ooga --test examples tests/cases` → **32 ok, 0 wrong** (15 examples + 17 cases), run with the published `bin/ooga.dll`.
 
@@ -103,6 +103,7 @@ Also: `ooga --test examples tests/cases` → **32 ok, 0 wrong** (15 examples + 1
 | `ExampleAndCliTests` | every file in `examples/` through the real `ooga` command, with exact output; CLI behaviour |
 | `ScriptCaseTests` | every script in `examples/` and `tests/cases/` against its `expected/*.out` (the same check as `ooga --test`) |
 | `TestRunnerTests` | the checker itself fails when it should: wrong line, missing expected file, never-ending script, wrong exit code |
+| `OogaVsCSharpTests` | each of the 10 C# programs in `docs/ooga-vs-csharp/` shows exactly what its Ooga twin shows, and `OOGA_VS_CSHARP.md` shows exactly that code |
 
 ### Script cases (`tests/cases/`)
 

@@ -1,0 +1,10 @@
+me has scores list 40 75 12
+scores gain 99
+say item 1 of scores
+say size of scores
+say scores has 75
+item 2 of scores is 80
+me has total 0
+each s in scores
+    total gain s
+say total

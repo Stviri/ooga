@@ -1,0 +1,7 @@
+me has health 100
+me has name "grok"
+health lose 30
+health gain 5
+name gain "!"
+health is health * 2
+say name + " has " + health
