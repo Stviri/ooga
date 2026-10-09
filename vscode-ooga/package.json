@@ -3,7 +3,7 @@
   "displayName": "Ooga",
   "description": "Colors for the ooga language",
   "publisher": "local",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "engines": { "vscode": "^1.60.0" },
   "categories": ["Programming Languages"],
   "contributes": {
