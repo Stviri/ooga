@@ -184,6 +184,15 @@ public class Checker
             case ItemExpr i: CheckExpr(i.Index, scope); CheckExpr(i.Holder, scope); break;
             case SizeExpr size: CheckExpr(size.Inner, scope); break;
             case KindExpr kind: CheckExpr(kind.Inner, scope); break;
+            case ActionRefExpr r:
+                if (!actions.ContainsKey(r.Name) && !builtIns.ContainsKey(r.Name))
+                {
+                    string hint = Spelling.Suggest(r.Name, actions.Keys.Concat(builtIns.Keys));
+                    throw new OogaError(r, hint != null
+                        ? $"me no know action {r.Name}. you mean {hint}?"
+                        : $"me no know action {r.Name}. teach me first with: me can {r.Name}");
+                }
+                break;
             case CallExpr call:
                 CheckCall(call);
                 foreach (var a in call.Args) CheckExpr(a, scope);

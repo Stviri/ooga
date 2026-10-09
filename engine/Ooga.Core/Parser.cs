@@ -8,7 +8,7 @@ public class Parser
         "me", "is", "has", "can", "die", "say", "if", "else", "repeat", "while", "count", "from", "to",
         "stop", "skip", "give", "wait", "when", "and", "or", "not", "same", "big", "small",
         "yes", "no", "nothing", "ask", "random", "gain", "lose",
-        "list", "box", "of", "item", "size", "kind", "each", "in", "try", "oops", "fail", "use",
+        "list", "box", "of", "item", "size", "kind", "each", "in", "try", "oops", "fail", "use", "action",
     };
 
     // Words that can start a line. Used for "you mean ...?" hints.
@@ -462,7 +462,7 @@ public class Parser
     bool StartsArg(Token tk) =>
         tk.Kind is Tok.Number or Tok.Text
         || IsSym(tk, "(")
-        || (tk.Kind == Tok.Word && (!Keywords.Contains(tk.Value) || tk.Value is "yes" or "no" or "nothing" or "size" or "kind" or "item"));
+        || (tk.Kind == Tok.Word && (!Keywords.Contains(tk.Value) || tk.Value is "yes" or "no" or "nothing" or "size" or "kind" or "item" or "action"));
 
     CallExpr ParseCallAfterMe(Token me)
     {
@@ -537,6 +537,15 @@ public class Parser
                             box.Parts.Add((partTok.Value, ParsePrimary()));
                         }
                         return box;
+                    }
+                    case "action":
+                    {
+                        Next();
+                        var nameTok = Peek();
+                        if (nameTok.Kind != Tok.Word || (Keywords.Contains(nameTok.Value) && nameTok.Value != "die"))
+                            throw Err(nameTok, "action which? like: action double");
+                        Next();
+                        return At(new ActionRefExpr { Name = nameTok.Value }, tk);
                     }
                     case "size":
                     case "kind":

@@ -50,6 +50,16 @@ public class OogaBox
     public override string ToString() => Values.Show(this);
 }
 
+// An action held as a value: "action double". Run it with "me call f 5".
+public class ActionValue
+{
+    public readonly string Name;
+    public ActionValue(string name) { Name = name; }
+    public override bool Equals(object o) => o is ActionValue a && a.Name == Name;
+    public override int GetHashCode() => Name.GetHashCode();
+    public override string ToString() => "action " + Name;
+}
+
 public static class Values
 {
     // ---------- showing ----------
@@ -66,6 +76,7 @@ public static class Values
             case bool b: return b ? "yes" : "no";
             case double d: return FormatNumber(d);
             case string s: return quoteText ? Quote(s) : s;
+            case ActionValue a: return a.ToString();
             case OogaList list:
             {
                 var sb = new StringBuilder("list");
@@ -94,7 +105,7 @@ public static class Values
     {
         string shown = Show(v, depth + 1, quoteText: true);
         bool wrap = (v is OogaList l && l.Items.Count > 0) || (v is OogaBox b && b.Count > 0)
-                    || (v is double d && d < 0);
+                    || (v is double d && d < 0) || v is ActionValue;
         return wrap ? "(" + shown + ")" : shown;
     }
 
@@ -119,6 +130,7 @@ public static class Values
         double d => "number " + FormatNumber(d),
         string s => "text " + Quote(s.Length > 40 ? s.Substring(0, 40) + "..." : s),
         OogaList l => l.Items.Count == 1 ? "list of 1 thing" : $"list of {l.Items.Count} things",
+        ActionValue a => a.ToString(),
         OogaBox b => b.Count == 0 ? "empty box" : "box with " + string.Join(", ", b.Keys.Take(5).Select(k => Show(k))),
         _ => "C# thing " + v.GetType().FullName,
     };
@@ -132,6 +144,7 @@ public static class Values
         string => "text",
         OogaList => "list",
         OogaBox => "box",
+        ActionValue => "action",
         _ => "csharp",
     };
 

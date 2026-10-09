@@ -163,10 +163,11 @@ public static class CSharpBridge
 
     static object Invoke(ActionCall c, Type type, object target, string name, object[] args, BindingFlags flags)
     {
-        var methods = type.GetMethods(flags).Where(m => !m.IsGenericMethodDefinition && m.Name == name).ToArray();
+        var methods = type.GetMethods(flags).Where(m => m.Name == name).ToArray();
         if (methods.Length == 0)
-            methods = type.GetMethods(flags).Where(m => !m.IsGenericMethodDefinition
-                && string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase)).ToArray();
+            methods = type.GetMethods(flags).Where(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase)).ToArray();
+        // Generic methods (like Array.Find<T>) get their T guessed from the things handed in.
+        methods = methods.Select(m => m.IsGenericMethodDefinition ? CloseGeneric(m, args) : m).Where(m => m != null).ToArray();
         if (methods.Length == 0)
             throw c.Problem($"{type.Name} no have {(target == null ? "static " : "")}method \"{name}\".");
 
@@ -174,6 +175,53 @@ public static class CSharpBridge
         if (method == null)
             throw c.Problem($"{type.Name}.{name} no take {Things(args.Length)} like that. {Choices(methods, name)}");
         return FromCSharp(c, Catch(c, () => method.Invoke(target, converted)));
+    }
+
+    // Guesses the T in a generic method from the ooga things: numbers -> double, texts -> string, a list of numbers -> double, ...
+    static MethodInfo CloseGeneric(MethodInfo m, object[] args)
+    {
+        var generic = m.GetGenericArguments();
+        var chosen = new Type[generic.Length];
+        var ps = m.GetParameters();
+        for (int g = 0; g < generic.Length; g++)
+        {
+            for (int i = 0; i < ps.Length && i < args.Length && chosen[g] == null; i++)
+            {
+                var pt = ps[i].ParameterType;
+                if (pt == generic[g])
+                    chosen[g] = ClrTypeOf(args[i]);
+                else if (args[i] is OogaList list
+                         && ((pt.IsArray && pt.GetElementType() == generic[g])
+                             || (pt.IsGenericType && pt.GetGenericArguments().Length == 1 && pt.GetGenericArguments()[0] == generic[g])))
+                    chosen[g] = CommonType(list.Items);
+            }
+            chosen[g] ??= typeof(object);
+        }
+        try
+        {
+            return m.MakeGenericMethod(chosen);
+        }
+        catch (ArgumentException)
+        {
+            return null;   // the guess breaks a rule of the method (a "where T : ..." rule)
+        }
+    }
+
+    static Type ClrTypeOf(object v) => v switch
+    {
+        null => typeof(object),
+        double => typeof(double),
+        string => typeof(string),
+        bool => typeof(bool),
+        OogaList or OogaBox or ActionValue => typeof(object),
+        _ => v.GetType(),
+    };
+
+    static Type CommonType(List<object> items)
+    {
+        if (items.Count == 0) return typeof(object);
+        var first = ClrTypeOf(items[0]);
+        return items.All(x => ClrTypeOf(x) == first) ? first : typeof(object);
     }
 
     // Picks the method (or constructor) whose things fit best.
@@ -192,7 +240,7 @@ public static class CSharpBridge
             for (int i = 0; i < ps.Length && ok; i++)
             {
                 if (i >= args.Length) { converted[i] = ps[i].DefaultValue; score += 1; continue; }
-                ok = TryConvert(args[i], ps[i].ParameterType, out converted[i], out int s);
+                ok = TryConvert(c, args[i], ps[i].ParameterType, out converted[i], out int s);
                 score += s;
             }
             if (ok && score < bestScore) (best, bestArgs, bestScore) = (m, converted, score);
@@ -214,6 +262,12 @@ public static class CSharpBridge
         {
             return work();
         }
+        catch (TargetInvocationException e) when (e.InnerException is OogaError or DieSignal or OperationCanceledException)
+        {
+            // Something from ooga itself (an ooga action called by C#): let it keep going as it is.
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e.InnerException).Throw();
+            throw;
+        }
         catch (TargetInvocationException e) when (e.InnerException != null)
         {
             throw c.Problem($"C# say problem: {e.InnerException.Message}");
@@ -228,12 +282,12 @@ public static class CSharpBridge
     // ---------- ooga -> C# ----------
 
     static object Convert(ActionCall c, object v, Type target) =>
-        TryConvert(v, target, out var result, out _)
+        TryConvert(c, v, target, out var result, out _)
             ? result
             : throw c.Problem($"no can turn {Values.Describe(v)} into C# {target.Name}.");
 
     // score: 0 = perfect fit, bigger = worse fit.
-    static bool TryConvert(object v, Type target, out object result, out int score)
+    static bool TryConvert(ActionCall c, object v, Type target, out object result, out int score)
     {
         result = null;
         score = 0;
@@ -273,6 +327,11 @@ public static class CSharpBridge
                 if (target.IsEnum && Enum.TryParse(target, s, ignoreCase: true, out var e)) { result = e; score = 1; return true; }
                 if (target == typeof(Type) && FindType(s) is Type t) { result = t; score = 2; return true; }
                 break;
+            case ActionValue action when typeof(Delegate).IsAssignableFrom(target) && target != typeof(Delegate)
+                                         && target != typeof(MulticastDelegate):
+                result = MakeDelegate(c, action, target);
+                score = 1;
+                return result != null;
             case OogaList list:
             {
                 Type item = target.IsArray ? target.GetElementType()
@@ -285,7 +344,7 @@ public static class CSharpBridge
                 var array = Array.CreateInstance(item, list.Items.Count);
                 for (int i = 0; i < list.Items.Count; i++)
                 {
-                    if (!TryConvert(list.Items[i], item, out var x, out int s)) return false;
+                    if (!TryConvert(c, list.Items[i], item, out var x, out int s)) return false;
                     array.SetValue(x, i);
                     score += s;
                 }
@@ -309,6 +368,48 @@ public static class CSharpBridge
             return true;
         }
         return false;
+    }
+
+    // Wraps an ooga action as a C# delegate (Func, Action, Predicate, Comparison, ...).
+    // When C# calls it, the things are turned into ooga values, the action runs, and its answer goes back to C#.
+    static Delegate MakeDelegate(ActionCall c, ActionValue action, Type delegateType)
+    {
+        var invokeMethod = delegateType.GetMethod("Invoke");
+        if (invokeMethod == null || invokeMethod.GetParameters().Any(p => p.ParameterType.IsByRef)) return null;
+        var ps = invokeMethod.GetParameters()
+            .Select(p => System.Linq.Expressions.Expression.Parameter(p.ParameterType, p.Name)).ToArray();
+        var bridge = new DelegateBridge(c, action, invokeMethod.ReturnType);
+        var args = System.Linq.Expressions.Expression.NewArrayInit(typeof(object),
+            ps.Select(p => System.Linq.Expressions.Expression.Convert(p, typeof(object))));
+        System.Linq.Expressions.Expression body = System.Linq.Expressions.Expression.Call(
+            System.Linq.Expressions.Expression.Constant(bridge), typeof(DelegateBridge).GetMethod(nameof(DelegateBridge.Run)), args);
+        if (invokeMethod.ReturnType != typeof(void))
+            body = System.Linq.Expressions.Expression.Convert(body, invokeMethod.ReturnType);
+        return System.Linq.Expressions.Expression.Lambda(delegateType, body, ps).Compile();
+    }
+
+    sealed class DelegateBridge
+    {
+        readonly ActionCall call;
+        readonly ActionValue action;
+        readonly Type returns;
+
+        public DelegateBridge(ActionCall call, ActionValue action, Type returns)
+        {
+            this.call = call;
+            this.action = action;
+            this.returns = returns;
+        }
+
+        public object Run(object[] things)
+        {
+            var oogaThings = things.Select(t => FromCSharp(call, t)).ToArray();
+            object answer = call.Invoke(action, oogaThings);
+            if (returns == typeof(void)) return null;
+            if (!TryConvert(call, answer, returns, out var result, out _))
+                throw call.Problem($"action {action.Name} gave {Values.Describe(answer)}, but C# want {returns.Name}.");
+            return result;
+        }
     }
 
     static bool IsWholeType(Type t) =>
@@ -350,7 +451,7 @@ public static class CSharpBridge
                 }
                 return box;
             }
-            case Array or IList:
+            case IEnumerable:   // arrays, lists, and LINQ answers become ooga lists
             {
                 var list = new OogaList();
                 foreach (var x in (IEnumerable)r)

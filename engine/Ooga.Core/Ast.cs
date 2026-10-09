@@ -31,6 +31,7 @@ public class PartExpr : Expr { public string Part; public Expr Holder; }       /
 public class ItemExpr : Expr { public Expr Index; public Expr Holder; }        // item 2 of bag
 public class SizeExpr : Expr { public Expr Inner; }                            // size of bag
 public class KindExpr : Expr { public Expr Inner; }                            // kind of x
+public class ActionRefExpr : Expr { public string Name; }                      // action double
 
 // ---------- lines (statements) ----------
 

@@ -315,19 +315,33 @@ public class Interpreter
 
     // ---------- actions ----------
 
-    object Call(CallExpr call)
-    {
-        var args = call.Args.Select(Eval).ToArray();
+    object Call(CallExpr call) => CallAction(call.Name, call.Args.Select(Eval).ToArray(), call);
 
-        if (!actions.TryGetValue(call.Name, out var can))
+    // Runs an action held as a value ("me call f 5", or inside keep / change_each / sort_by).
+    object CallValue(object f, object[] args, Node at)
+    {
+        if (f is not ActionValue av)
+            throw Problem(at, $"need an action here (like: action double), but got {Values.Describe(f)}.");
+        int want, most;
+        if (actions.TryGetValue(av.Name, out var can)) want = most = can.Params.Count;
+        else (want, most) = (builtIns[av.Name].MinThings, builtIns[av.Name].MaxThings);
+        if (args.Length < want || (most >= 0 && args.Length > most))
+            throw Problem(at, $"action {av.Name} want {(want == most ? Library.CountText(want) : $"{want} or more things")} but got {Library.CountText(args.Length)}.");
+        return CallAction(av.Name, args, at);
+    }
+
+    object CallAction(string name, object[] args, Node call)
+    {
+        if (!actions.TryGetValue(name, out var can))
         {
-            var built = builtIns[call.Name];
+            var built = builtIns[name];
             try
             {
                 return built.Run(new ActionCall
                 {
-                    Name = call.Name, Things = args, At = call, Host = host,
+                    Name = name, Things = args, At = call, Host = host,
                     Random = rng, Options = options, Started = started,
+                    Invoke = (f, things) => CallValue(f, things, call),
                 });
             }
             catch (OogaError e)
@@ -338,7 +352,7 @@ public class Interpreter
         }
 
         if (++depth > options.MaxDepth)
-            throw Problem(call, $"me dizzy. {call.Name} called too many times inside itself. need a way to stop. (math given to an action need ( ) around it, like: me {call.Name} (n - 1))");
+            throw Problem(call, $"me dizzy. {name} called too many times inside itself. need a way to stop. (math given to an action need ( ) around it, like: me {name} (n - 1))");
 
         var saved = locals;
         locals = new Dictionary<string, object>();
@@ -521,6 +535,9 @@ public class Interpreter
 
             case KindExpr kind:
                 return Values.KindName(Eval(kind.Inner));
+
+            case ActionRefExpr r:
+                return new ActionValue(r.Name);
 
             case CallExpr call:
                 return Call(call);

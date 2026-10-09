@@ -43,6 +43,9 @@ public class ActionCall
     public RunOptions Options { get; init; }
     public DateTime Started { get; init; }
 
+    // Runs an action value ("action double") with these things, and gives its answer.
+    public Func<object, object[], object> Invoke { get; init; }
+
     public object this[int i] => Things[i];
     public int Count => Things.Length;
 
@@ -215,6 +218,19 @@ public static class Library
                 (items[i], items[j]) = (items[j], items[i]);
             }
             return new OogaList(items);
+        });
+
+        // ---------- actions as values ----------
+        yield return new("call", 1, -1, c => c.Invoke(c[0], c.Things.Skip(1).ToArray()));
+        yield return new("keep", 2, c => new OogaList(c.List(0).Items.Where(x =>
+            c.Invoke(c[1], new[] { x }) is bool b ? b : throw c.Problem("keep need an action that gives yes or no."))));
+        yield return new("change_each", 2, c => new OogaList(c.List(0).Items.Select(x => c.Invoke(c[1], new[] { x })).ToList()));
+        yield return new("sort_by", 2, c =>
+        {
+            var keyed = c.List(0).Items.Select(x => (Item: x, Key: c.Invoke(c[1], new[] { x }))).ToList();
+            if (keyed.All(k => k.Key is double)) return new OogaList(keyed.OrderBy(k => (double)k.Key).Select(k => k.Item));
+            if (keyed.All(k => k.Key is string)) return new OogaList(keyed.OrderBy(k => (string)k.Key, StringComparer.Ordinal).Select(k => k.Item));
+            throw c.Problem("sort_by need an action that gives only numbers or only texts.");
         });
 
         // ---------- time and outside world ----------
