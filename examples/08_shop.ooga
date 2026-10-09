@@ -1,0 +1,40 @@
+# cave shop: actions that give answers, loops, checks, and ask, all together.
+# try it: buy a few things, type a wrong number, then type 0 to leave.
+
+me has shells 20
+me has things 0
+me has shopping yes
+
+# how many shells a thing cost. "nothing" means ooga no sell it.
+me can price item
+    if item is 1
+        give 5
+    if item is 2
+        give 2
+    give nothing
+
+me can name_of item
+    if item is 1
+        give "club"
+    give "rock"
+
+say "welcome to cave shop. you have " + shells + " shells."
+say "1 = club (5 shells), 2 = rock (2 shells), 0 = leave"
+
+repeat while shopping
+    me has pick ask "buy what?"
+    me has cost me price pick
+    if pick is 0
+        shopping is no
+        say "bye! you leave with " + shells + " shells and " + things + " things."
+    else if cost is nothing
+        say "ooga no sell that."
+    else if cost is big shells
+        say "you no have enough shells."
+    else
+        shells lose cost
+        things gain 1
+        say "you buy " + (me name_of pick) + ". " + shells + " shells left."
+        if shells is 0
+            say "no more shells. shop close."
+            shopping is no

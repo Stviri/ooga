@@ -1,0 +1,20 @@
+# fizzbuzz: say "fizz" every 3rd number, "buzz" every 5th, "fizzbuzz" when both.
+# two counters count up, and go back to 0 when they reach their number.
+
+me has three 0
+me has five 0
+
+count i from 1 to 15
+    three gain 1
+    five gain 1
+    me has word ""
+    if three is 3
+        word gain "fizz"
+        three is 0
+    if five is 5
+        word gain "buzz"
+        five is 0
+    if word is ""
+        say i
+    else
+        say word

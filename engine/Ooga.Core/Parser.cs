@@ -10,6 +10,9 @@ public class Parser
         "yes", "no", "nothing", "ask", "random", "gain", "lose",
     };
 
+    // Words that can start a line. Used for "you mean ...?" hints.
+    static readonly string[] LineStarters = { "say", "if", "else", "repeat", "count", "stop", "skip", "give", "wait", "me" };
+
     readonly List<Token> t;
     int p;
 
@@ -63,6 +66,10 @@ public class Parser
         var tk = Peek();
         if (tk.Kind == Tok.Newline) { Next(); return; }
         if (tk.Kind is Tok.End or Tok.Dedent) return;
+        if (IsWord(tk, "me"))
+            throw Err(tk, "ooga confused by me here. to give an action's answer to other action, wrap it in ( ), like: me double (me double 2)");
+        if (tk.Kind == Tok.Symbol && "+-*/".Contains(tk.Value))
+            throw Err(tk, $"ooga confused by {tk} here. if this math is for an action, put ( ) around it, like: me hit (5 + 1)");
         throw Err(tk, $"ooga confused by {tk} here. too many things on this line?");
     }
 
@@ -180,6 +187,9 @@ public class Parser
                 }
                 else
                 {
+                    string hint = Spelling.Suggest(name, LineStarters);
+                    if (hint != null)
+                        throw Err(tk, $"ooga no know \"{name}\". you mean {hint}?");
                     throw Err(tk, $"what to do with {name}? try \"{name} is 5\", \"{name} gain 1\", or \"say {name}\".");
                 }
                 break;
@@ -311,6 +321,15 @@ public class Parser
         var isTok = Next();
         bool not = false;
         if (IsWord(Peek(), "not")) { Next(); not = true; }
+
+        // "x is bigg 5": a misspelled check word followed by a value.
+        var w = Peek();
+        if (w.Kind == Tok.Word && !Keywords.Contains(w.Value) && StartsArg(Peek(1)))
+        {
+            string hint = Spelling.Suggest(w.Value, new[] { "big", "small", "same" });
+            if (hint != null)
+                throw Err(w, $"ooga no know \"{w.Value}\". you mean {hint}?");
+        }
 
         var op = CompareOp.Same;
         if (IsWord(Peek(), "same"))

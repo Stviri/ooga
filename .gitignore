@@ -1,5 +1,8 @@
-# build leftovers
-engine/obj/
-engine/bin/
+# build leftovers (the published runner in bin/ at the top IS kept on purpose)
+engine/**/bin/
+engine/**/obj/
+tests/**/bin/
+tests/**/obj/
+TestResults/
 *.vsix
 bin/*.pdb

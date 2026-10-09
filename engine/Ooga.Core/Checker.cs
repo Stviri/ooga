@@ -139,7 +139,7 @@ public class Checker
             case CallExpr call:
                 if (!actions.TryGetValue(call.Name, out var can))
                 {
-                    string hint = Suggest(call.Name, actions.Keys);
+                    string hint = Spelling.Suggest(call.Name, actions.Keys);
                     throw new OogaError(call.Line, call.Col,
                         hint != null
                             ? $"me no know how to {call.Name}. you mean {hint}?"
@@ -155,37 +155,16 @@ public class Checker
 
     static string Things(int n) => n == 1 ? "1 thing" : $"{n} things";
 
-    static void CheckName(string name, Node at, HashSet<string> scope)
+    void CheckName(string name, Node at, HashSet<string> scope)
     {
         if (scope.Contains(name)) return;
-        string hint = Suggest(name, scope);
+        if (actions.TryGetValue(name, out var can))
+            throw new OogaError(at.Line, at.Col,
+                $"\"{name}\" is an action (line {can.Line}), not a thing. to use it, write: me {name}");
+        string hint = Spelling.Suggest(name, scope);
         throw new OogaError(at.Line, at.Col,
             hint != null
                 ? $"no thing called \"{name}\". you mean \"{hint}\"?"
                 : $"no thing called \"{name}\". make it first with: me has {name} 0");
-    }
-
-    static string Suggest(string name, IEnumerable<string> candidates)
-    {
-        string best = null;
-        int bestDist = 3;
-        foreach (var c in candidates)
-        {
-            int d = Distance(name, c);
-            if (d < bestDist) { bestDist = d; best = c; }
-        }
-        return best;
-    }
-
-    static int Distance(string a, string b)
-    {
-        var d = new int[a.Length + 1, b.Length + 1];
-        for (int i = 0; i <= a.Length; i++) d[i, 0] = i;
-        for (int j = 0; j <= b.Length; j++) d[0, j] = j;
-        for (int i = 1; i <= a.Length; i++)
-            for (int j = 1; j <= b.Length; j++)
-                d[i, j] = Math.Min(Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
-                    d[i - 1, j - 1] + (a[i - 1] == b[j - 1] ? 0 : 1));
-        return d[a.Length, b.Length];
     }
 }
