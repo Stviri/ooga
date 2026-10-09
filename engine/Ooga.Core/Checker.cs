@@ -10,9 +10,14 @@ public class Checker
     Checker(IReadOnlyDictionary<string, OogaAction> builtIns) { this.builtIns = builtIns; }
 
     public static void Check(OogaProgram program, IReadOnlyDictionary<string, OogaAction> builtIns = null) =>
-        new Checker(builtIns ?? Library.Standard).Run(program);
+        new Checker(builtIns ?? Library.Standard).Run(program, null, null);
 
-    void Run(OogaProgram program)
+    // For talk mode: things and actions made by earlier pieces are known too. A new "me can" may replace an old one.
+    public static void CheckMore(OogaProgram program, IReadOnlyDictionary<string, OogaAction> builtIns,
+        IEnumerable<string> knownThings, IReadOnlyDictionary<string, CanStmt> knownActions) =>
+        new Checker(builtIns ?? Library.Standard).Run(program, knownThings, knownActions);
+
+    void Run(OogaProgram program, IEnumerable<string> knownThings, IReadOnlyDictionary<string, CanStmt> knownActions)
     {
         // Pass 1: learn every action and every top-level thing "me has".
         foreach (var s in program.Body)
@@ -26,6 +31,10 @@ public class Checker
                 actions[can.Name] = can;
             }
         }
+        foreach (var (name, old) in knownActions ?? new Dictionary<string, CanStmt>())
+            actions.TryAdd(name, old);
+        foreach (var name in knownThings ?? Enumerable.Empty<string>())
+            globals.Add(name);
         CollectNames(program.Body, globals, new Dictionary<string, Node>());
 
         // Pass 2: check every line.

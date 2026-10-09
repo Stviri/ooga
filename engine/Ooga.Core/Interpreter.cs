@@ -22,7 +22,7 @@ public class Interpreter
     int depth;
     long steps;
 
-    Interpreter(IOogaHost host, RunOptions options)
+    internal Interpreter(IOogaHost host, RunOptions options)
     {
         this.host = host;
         this.options = options;
@@ -46,6 +46,38 @@ public class Interpreter
         }
         return RunEnd.Finished;
     }
+
+    // For talk mode: run one more piece of program, keeping the things and actions from before.
+    internal RunEnd RunMore(OogaProgram program)
+    {
+        foreach (var s in program.Body)
+            if (s is CanStmt can) actions[can.Name] = can;
+        locals = null;
+        depth = 0;
+        LastAnswer = null;
+        try
+        {
+            // A piece that is only one action use: keep its answer, so talk mode can show it.
+            if (program.Body.Count == 1 && program.Body[0] is CallStmt only)
+            {
+                Step(only);
+                LastAnswer = Call(only.Call);
+            }
+            else
+            {
+                ExecBlock(program.Body);
+            }
+        }
+        catch (DieSignal)
+        {
+            return RunEnd.Died;
+        }
+        return RunEnd.Finished;
+    }
+
+    internal object LastAnswer { get; private set; }
+    internal IEnumerable<string> ThingNames => globals.Keys;
+    internal IReadOnlyDictionary<string, CanStmt> Actions => actions;
 
     // Counts work done, so tests (or an engine) can stop a program that never ends.
     void Step(Node at)

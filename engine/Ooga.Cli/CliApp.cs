@@ -20,8 +20,12 @@ public static class CliApp
             output.WriteLine("ooga run ooga files.");
             output.WriteLine("use like this:  ooga hello.ooga");
             output.WriteLine("words after the file name go to the script: me arguments");
+            output.WriteLine("talk to ooga line by line:  ooga --talk");
             return args.Length == 0 ? UsageProblem : Ok;
         }
+
+        if (args[0] is "--talk" or "-i")
+            return Talk(input, output, error, color, realWait);
 
         string path = args[0];
         if (!File.Exists(path))
@@ -54,6 +58,64 @@ public static class CliApp
             error.WriteLine(e.ToString());
             return EngineProblem;
         }
+    }
+
+    // Words that start a block: the piece goes on until an empty line.
+    static readonly string[] BlockStarters = { "if", "repeat", "count", "each", "try" };
+
+    // Talk mode: type ooga, see what happens, things are kept between pieces.
+    static int Talk(TextReader input, TextWriter output, TextWriter error, bool color, bool realWait)
+    {
+        output.WriteLine("ooga talk. type ooga lines and press Enter.");
+        output.WriteLine("lines that start a block (if, repeat, count, each, try, me can) end with an empty line.");
+        output.WriteLine("type bye to leave.");
+        var host = new ConsoleHost(input, output, realWait);
+        var talk = new OogaSession(host, new RunOptions { FileName = "talk" });
+
+        while (true)
+        {
+            output.Write("ooga> ");
+            output.Flush();
+            string line = input.ReadLine();
+            if (line == null || line.Trim() == "bye") break;
+            if (line.Trim() == "") continue;
+
+            var piece = new List<string> { line };
+            string first = line.TrimStart().Split(' ')[0];
+            if (BlockStarters.Contains(first) || line.TrimStart().StartsWith("me can "))
+            {
+                while (true)
+                {
+                    output.Write("....> ");
+                    output.Flush();
+                    string more = input.ReadLine();
+                    if (more == null || more.Trim() == "") break;
+                    piece.Add(more);
+                }
+            }
+
+            try
+            {
+                if (talk.Run(string.Join("\n", piece)) == RunEnd.Died)
+                {
+                    output.WriteLine("(me die. talk over.)");
+                    break;
+                }
+            }
+            catch (OogaError e)
+            {
+                output.Flush();
+                ShowError(error, e.Report(), color);
+                error.Flush();
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                error.WriteLine("ooga engine broke. this is engine bug, not your fault.");
+                error.WriteLine(e.ToString());
+            }
+        }
+        output.WriteLine("bye!");
+        return Ok;
     }
 
     static void ShowError(TextWriter error, ErrorReport report, bool color)

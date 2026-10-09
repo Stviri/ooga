@@ -134,7 +134,7 @@ public static class OogaRunner
     }
 
     // Replaces each 'use "file"' line with the lines of that file (each file only once).
-    static List<Stmt> Link(List<Stmt> body, IOogaFiles files, HashSet<string> used, Dictionary<string, string> sources, int depth)
+    internal static List<Stmt> Link(List<Stmt> body, IOogaFiles files, HashSet<string> used, Dictionary<string, string> sources, int depth)
     {
         var result = new List<Stmt>();
         foreach (var s in body)
