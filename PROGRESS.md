@@ -78,7 +78,7 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 - `wait` blocks the whole program (fine for the console, an engine adapter will handle it differently).
 - `when` events, `me is`, players, enemies and scenes need a game engine adapter. None exists yet.
 - Using a file thing before its `me has` line has run is caught **while running**, not before.
-- `bin\ooga.exe` was built on Linux for Windows. It is a valid Windows x64 program, but it has **not been run on Windows**. The same build's `ooga.dll` was run on Linux for every example and for talk mode.
+- `bin\ooga.exe` is built on Linux for Windows. **Checked on the user's Windows PC (2026-10-09):** `.\ooga --test examples tests\cases` gave `32 ok, 0 wrong`. Talk mode and VS Code Ctrl+Shift+B have not been reported from Windows yet.
 
 ## Tests run
 
@@ -123,7 +123,7 @@ Also checked by hand with the published `bin/ooga.dll`: all 15 examples (exit co
 
 ## Next recommended tasks
 
-1. **Try it on Windows**: `.\ooga --test examples tests\cases` (should say `32 ok, 0 wrong`), then `.\ooga --talk`. Press Ctrl+Shift+B in VS Code. Reinstall the VS Code colours (`vscode-ooga\pack.ps1`) for the new words.
+1. **Finish the Windows check**: `.\ooga --test examples tests\cases` already passes on Windows. Still to try there: `.\ooga --talk`, Ctrl+Shift+B in VS Code, and reinstalling the VS Code colours (`vscode-ooga\pack.ps1`) for the new words.
 2. **Write a bigger program yourself** (a text adventure with boxes for rooms, or a score tracker with files) and note what felt awkward.
 3. **Move from .NET 8 to .NET 10** before 10 November 2026: install the .NET 10 runtime, change `net8.0` to `net10.0` in `Directory.Build.props`, rebuild `bin`.
 4. Then the **Godot adapter**: a new project that implements `IOogaHost`, adds game actions through `RunOptions.Actions`, and turns `when` into engine events.
