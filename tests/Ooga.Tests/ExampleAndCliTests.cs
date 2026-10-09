@@ -262,6 +262,23 @@ public class CliTests
     }
 
     [Fact]
+    public void Unknown_option_is_named_not_treated_as_a_file()
+    {
+        var run = Cli.Run(new[] { "--tset", "examples" });
+        Assert.Equal(CliApp.UsageProblem, run.Exit);
+        Assert.StartsWith("ooga no know --tset. ooga know: --talk, --test, --seed, --help", run.Err);
+        Assert.DoesNotContain("no find file", run.Err);
+    }
+
+    [Fact]
+    public void Help_lists_every_option()
+    {
+        var run = Cli.Run(new[] { "--help" });
+        foreach (var option in new[] { "--seed", "--talk", "--test" })
+            Assert.Contains(option, run.Out);
+    }
+
+    [Fact]
     public void Missing_file_is_reported()
     {
         var run = Cli.Run(new[] { "no_such_file.ooga" });

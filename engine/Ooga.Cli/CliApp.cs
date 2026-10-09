@@ -45,6 +45,12 @@ public static class CliApp
         }
 
         string path = args[0];
+        if (path.StartsWith("--") && !File.Exists(path))
+        {
+            error.WriteLine($"ooga no know {path}. ooga know: --talk, --test, --seed, --help");
+            error.WriteLine("(if --help no show it either, this ooga.exe is old. get the new one with: git pull)");
+            return UsageProblem;
+        }
         if (!File.Exists(path))
         {
             error.WriteLine($"ooga no find file: {path}");
