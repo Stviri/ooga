@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The "ooga" command: reads a .ooga file and runs it in the console. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>ooga</AssemblyName>
+    <RootNamespace>Ooga.Cli</RootNamespace>
+    <!-- Run on .NET 8, or on a newer .NET if 8 is not installed. -->
+    <RollForward>Major</RollForward>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ooga.Core\Ooga.Core.csproj" />
+  </ItemGroup>
+
+</Project>

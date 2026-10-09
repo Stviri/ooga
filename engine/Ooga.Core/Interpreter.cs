@@ -1,30 +1,56 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Ooga;
 
-// Thrown by "me die" to end the program quietly.
-public class DieSignal : Exception { }
-
 // Runs an ooga program line by line.
+// Values inside ooga are: double (number), string (text), bool (yes/no), null (nothing).
 public class Interpreter
 {
     enum Flow { Normal, Stop, Skip, Give }
 
-    const int MaxDepth = 500;
+    static readonly Regex NumberAnswer = new(@"^-?[0-9]+(\.[0-9]+)?$");
 
+    readonly IOogaHost host;
+    readonly RunOptions options;
     readonly Dictionary<string, object> globals = new();
     readonly Dictionary<string, CanStmt> actions = new();
-    readonly Random rng = new();
+    readonly Random rng;
     Dictionary<string, object> locals;   // null when not inside an action
     object giveValue;
     int depth;
+    long steps;
 
-    public static void Run(OogaProgram program)
+    Interpreter(IOogaHost host, RunOptions options)
     {
-        var it = new Interpreter();
+        this.host = host;
+        this.options = options;
+        rng = options.Seed is int seed ? new Random(seed) : new Random();
+    }
+
+    // Runs a checked program (see OogaRunner.Compile). Throws OogaError on problems found while running.
+    public static RunEnd Run(OogaProgram program, IOogaHost host, RunOptions options = null)
+    {
+        var it = new Interpreter(host, options ?? new RunOptions());
         foreach (var s in program.Body)
             if (s is CanStmt can) it.actions[can.Name] = can;
-        it.ExecBlock(program.Body);
+        try
+        {
+            it.ExecBlock(program.Body);
+        }
+        catch (DieSignal)
+        {
+            return RunEnd.Died;
+        }
+        return RunEnd.Finished;
+    }
+
+    // Counts work done, so tests (or an engine) can stop a program that never ends.
+    void Step(Node at)
+    {
+        options.Cancel.ThrowIfCancellationRequested();
+        if (options.MaxSteps > 0 && ++steps > options.MaxSteps)
+            throw new OogaError(at, $"ooga tired. program take more than {options.MaxSteps} steps. maybe a loop never end?");
     }
 
     // ---------- lines ----------
@@ -41,6 +67,7 @@ public class Interpreter
 
     Flow Exec(Stmt s)
     {
+        Step(s);
         switch (s)
         {
             case KindStmt:
@@ -69,7 +96,7 @@ public class Interpreter
             }
 
             case SayStmt say:
-                Console.WriteLine(Show(Eval(say.Value)));
+                host.Say(Show(Eval(say.Value)));
                 return Flow.Normal;
 
             case IfStmt i:
@@ -84,6 +111,7 @@ public class Interpreter
                     throw new OogaError(r.Times.Line, r.Times.Col, $"repeat need whole number 0 or more, not {Show(n)}.");
                 for (long k = 0; k < (long)n; k++)
                 {
+                    Step(r);
                     var flow = ExecBlock(r.Body);
                     if (flow == Flow.Stop) break;
                     if (flow == Flow.Give) return flow;
@@ -94,6 +122,7 @@ public class Interpreter
             case RepeatWhileStmt w:
                 while (Truth(w.Cond))
                 {
+                    Step(w);
                     var flow = ExecBlock(w.Body);
                     if (flow == Flow.Stop) break;
                     if (flow == Flow.Give) return flow;
@@ -108,6 +137,7 @@ public class Interpreter
                 var scope = locals ?? globals;
                 for (double v = from; step > 0 ? v <= to : v >= to; v += step)
                 {
+                    Step(c);
                     scope[c.Name] = v;
                     var flow = ExecBlock(c.Body);
                     if (flow == Flow.Stop) break;
@@ -127,8 +157,7 @@ public class Interpreter
             {
                 double secs = Number(Eval(wait.Seconds), wait.Seconds, "wait");
                 if (secs < 0) throw new OogaError(wait.Line, wait.Col, "no can wait less than 0 seconds.");
-                Console.Out.Flush();
-                Thread.Sleep(TimeSpan.FromSeconds(secs));
+                host.Wait(secs);
                 return Flow.Normal;
             }
 
@@ -163,8 +192,8 @@ public class Interpreter
         var can = actions[call.Name];
         var args = call.Args.Select(Eval).ToList();
 
-        if (++depth > MaxDepth)
-            throw new OogaError(call.Line, call.Col, $"me dizzy. {call.Name} called too many times inside itself. need a way to stop.");
+        if (++depth > options.MaxDepth)
+            throw new OogaError(call.Line, call.Col, $"me dizzy. {call.Name} called too many times inside itself. need a way to stop. (math given to an action need ( ) around it, like: me {call.Name} (n - 1))");
 
         var saved = locals;
         locals = new Dictionary<string, object>();
@@ -201,15 +230,18 @@ public class Interpreter
                     return Show(l) + Show(r);
                 if (l is not double a || r is not double b)
                     throw new OogaError(m.Line, m.Col, $"no can do {Describe(l)} {m.Op} {Describe(r)}. math need numbers.");
-                switch (m.Op)
+                if (m.Op == "/" && b == 0)
+                    throw new OogaError(m.Line, m.Col, "no can split by 0.");
+                double result = m.Op switch
                 {
-                    case "+": return a + b;
-                    case "-": return a - b;
-                    case "*": return a * b;
-                    default:
-                        if (b == 0) throw new OogaError(m.Line, m.Col, "no can split by 0.");
-                        return a / b;
-                }
+                    "+" => a + b,
+                    "-" => a - b,
+                    "*" => a * b,
+                    _ => a / b,
+                };
+                if (double.IsInfinity(result) || double.IsNaN(result))
+                    throw new OogaError(m.Line, m.Col, "number too big for ooga.");
+                return result;
             }
 
             case NegateExpr neg:
@@ -248,10 +280,14 @@ public class Interpreter
 
             case AskExpr ask:
             {
-                if (ask.Prompt != null) Console.Write(Show(Eval(ask.Prompt)) + " ");
-                string answer = (Console.ReadLine() ?? "").Trim().Trim('﻿').Trim();
-                if (double.TryParse(answer, NumberStyles.Float, CultureInfo.InvariantCulture, out double num))
-                    return num;
+                string prompt = ask.Prompt != null ? Show(Eval(ask.Prompt)) : null;
+                string answer = host.Ask(prompt);
+                if (answer == null)
+                    throw new OogaError(ask.Line, ask.Col, "ooga ask, but no more answers can come. (the typing ended)");
+                answer = answer.Trim().Trim('﻿').Trim();
+                // Only plain numbers like 5, -3, 2.5 become numbers. Everything else stays text.
+                if (NumberAnswer.IsMatch(answer))
+                    return double.Parse(answer, CultureInfo.InvariantCulture);
                 return answer;
             }
 

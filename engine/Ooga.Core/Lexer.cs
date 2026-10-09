@@ -3,19 +3,6 @@ using System.Text;
 
 namespace Ooga;
 
-// A problem in the ooga script. Line and column point at the spot to show the user.
-public class OogaError : Exception
-{
-    public int Line { get; }
-    public int Col { get; }
-
-    public OogaError(int line, int col, string message) : base(message)
-    {
-        Line = line;
-        Col = col;
-    }
-}
-
 public enum Tok { Number, Text, Word, Symbol, Newline, Indent, Dedent, End }
 
 public class Token
@@ -49,6 +36,7 @@ public static class Lexer
         var indents = new Stack<int>();
         indents.Push(0);
 
+        if (source.StartsWith('\uFEFF')) source = source.Substring(1);   // invisible mark some editors put at the start
         string[] lines = source.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
 
         for (int li = 0; li < lines.Length; li++)

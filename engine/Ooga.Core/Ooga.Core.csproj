@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The ooga language itself: reading, checking, and running scripts.
+       No console, no files, no game engine in here. Talk to the outside world through IOogaHost. -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Ooga.Core</AssemblyName>
+    <RootNamespace>Ooga</RootNamespace>
+  </PropertyGroup>
+
+</Project>
