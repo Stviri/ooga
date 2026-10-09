@@ -139,12 +139,14 @@ Talk to ooga line by line:
 ```
 
 New here? Start with **[QUICKSTART.md](QUICKSTART.md)**. Every word is in **[OOGA_RULEBOOK.md](OOGA_RULEBOOK.md)**.
+Know some C#, or want to learn it next? **[OOGA_VS_CSHARP.md](OOGA_VS_CSHARP.md)** shows 10 programs written in both, side by side.
 
 ## Folders
 
 - `OOGA_RULEBOOK.md`: every ooga word and what it does
 - `QUICKSTART.md`: exact commands and what you should see
 - `PROGRESS.md`: what works, what does not yet, and what comes next
+- `OOGA_VS_CSHARP.md`: the same programs in Ooga and C#, side by side (code in `docs/ooga-vs-csharp/`)
 - `examples/`: starter scripts
 - `my_scripts/`: your own scripts
 - `bin/`: the ready-made `ooga.exe` runner (`ooga.cmd` and `ooga.sh` start it)

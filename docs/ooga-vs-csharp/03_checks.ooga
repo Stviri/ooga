@@ -1,0 +1,7 @@
+me has health 20
+if health is small or same 0
+    say "dead"
+else if health is small 30 and health is not 13
+    say "hurt"
+else
+    say "fine"

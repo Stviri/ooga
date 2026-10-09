@@ -1,0 +1,9 @@
+count i from 1 to 15
+    if i % 15 is 0
+        say "fizzbuzz"
+    else if i % 3 is 0
+        say "fizz"
+    else if i % 5 is 0
+        say "buzz"
+    else
+        say i

@@ -3,6 +3,8 @@ engine/**/bin/
 engine/**/obj/
 tests/**/bin/
 tests/**/obj/
+docs/**/bin/
+docs/**/obj/
 TestResults/
 *.vsix
 bin/*.pdb

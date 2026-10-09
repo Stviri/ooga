@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The C# side of OOGA_VS_CSHARP.md. Each .cs file does exactly what the .ooga file with the same number does.
+       The tests run both and check they show the same thing. -->
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>OogaVsCSharp</AssemblyName>
+    <RootNamespace>OogaVsCSharp</RootNamespace>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+me can greet who
+    say "ooga, " + who + "!"
+
+me can double x
+    give x * 2
+
+me can factorial n
+    if n is small or same 1
+        give 1
+    give n * (me factorial (n - 1))
+
+me greet "zug"
+say me double 21
+say (me double 5) + 1
+say me factorial 5

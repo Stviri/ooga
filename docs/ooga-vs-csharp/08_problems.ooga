@@ -1,0 +1,12 @@
+me can withdraw amount
+    if amount is big 50
+        fail "not enough shells"
+    give 50 - amount
+
+try
+    say me withdraw 20
+    say me withdraw 80
+    say "never"
+oops why
+    say "oops: " + why
+say "after"

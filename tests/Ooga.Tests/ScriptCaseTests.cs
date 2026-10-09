@@ -9,7 +9,7 @@ public class ScriptCaseTests
     public static TheoryData<string> Scripts()
     {
         var data = new TheoryData<string>();
-        foreach (var folder in new[] { "examples", Path.Combine("tests", "cases") })
+        foreach (var folder in new[] { "examples", Path.Combine("tests", "cases"), Path.Combine("docs", "ooga-vs-csharp") })
             foreach (var script in TestRunner.Scripts(Path.Combine(O.RepoRoot(), folder)))
                 data.Add(Path.GetRelativePath(O.RepoRoot(), script).Replace('\\', '/'));
         return data;

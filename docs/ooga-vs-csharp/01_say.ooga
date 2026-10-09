@@ -1,0 +1,3 @@
+say "ooga booga"
+say "hello " + "grok"
+say 7 / 2
