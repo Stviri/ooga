@@ -12,6 +12,7 @@ public class Token
     public double Number;
     public int Line;
     public int Col;
+    public string File;
 
     public override string ToString() => Kind switch
     {
@@ -30,7 +31,22 @@ public static class Lexer
 {
     const int IndentSize = 4;
 
-    public static List<Token> Run(string source)
+    public static List<Token> Run(string source, string file = null)
+    {
+        try
+        {
+            var tokens = Read(source);
+            foreach (var t in tokens) t.File = file;
+            return tokens;
+        }
+        catch (OogaError e)
+        {
+            e.File ??= file;
+            throw;
+        }
+    }
+
+    static List<Token> Read(string source)
     {
         var tokens = new List<Token>();
         var indents = new Stack<int>();
@@ -126,7 +142,8 @@ public static class Lexer
                             if (e == 'n') sb.Append('\n');
                             else if (e == '"') sb.Append('"');
                             else if (e == '\\') sb.Append('\\');
-                            else throw new OogaError(lineNo, i + 1, $"ooga no know \\{e}. inside text, use \\\" for quote, \\n for new line, \\\\ for backslash.");
+                            else if (e == 't') sb.Append('\t');
+                            else throw new OogaError(lineNo, i + 1, $"ooga no know \\{e}. inside text, use \\\" for quote, \\n for new line, \\t for tab, \\\\ for backslash.");
                             i += 2;
                             continue;
                         }
@@ -139,7 +156,7 @@ public static class Lexer
                     continue;
                 }
 
-                if ("+-*/()".IndexOf(c) >= 0)
+                if ("+-*/%()".IndexOf(c) >= 0)
                 {
                     tokens.Add(new Token { Kind = Tok.Symbol, Value = c.ToString(), Line = lineNo, Col = col });
                     i++;

@@ -2,9 +2,12 @@ using Ooga;
 
 namespace Ooga.Tests;
 
-// A pretend outside world: answers come from a list, "say" lines are collected, "wait" does not sleep.
-public class FakeHost : IOogaHost
+// A pretend outside world: answers come from a list, "say" lines are collected, "wait" does not sleep,
+// and files live in memory.
+public class FakeHost : IOogaHost, IOogaFiles
 {
+    public readonly Dictionary<string, string> Files = new();
+
     readonly Queue<string> answers;
     public readonly List<string> Said = new();
     public readonly List<string> Prompts = new();
@@ -23,6 +26,29 @@ public class FakeHost : IOogaHost
     public void Wait(double seconds) => Waits.Add(seconds);
 
     public string Output => string.Join("\n", Said);
+
+    public string ReadFile(string path) =>
+        Files.TryGetValue(path, out var text) ? text : throw new FileNotFoundException("missing", path);
+
+    public void WriteFile(string path, string text, bool add) =>
+        Files[path] = add && Files.TryGetValue(path, out var old) ? old + text : text;
+
+    public bool FileExists(string path) => Files.ContainsKey(path);
+
+    public LoadedScript LoadScript(string path, string fromFile)
+    {
+        string name = Files.ContainsKey(path) ? path : path + ".ooga";
+        return Files.TryGetValue(name, out var text) ? new LoadedScript(name, name, text) : null;
+    }
+}
+
+// A host with no files at all, like a game engine might be.
+public class NoFilesHost : IOogaHost
+{
+    public readonly List<string> Said = new();
+    public void Say(string text) => Said.Add(text);
+    public string Ask(string prompt) => null;
+    public void Wait(double seconds) { }
 }
 
 public record RunResult(string Output, RunEnd End, FakeHost Host);
@@ -33,11 +59,15 @@ public static class O
     public static readonly TimeSpan TimeLimit = TimeSpan.FromSeconds(10);
     public const long MaxSteps = 2_000_000;
 
-    public static RunResult Run(string source, params string[] answers)
+    public static RunResult Run(string source, params string[] answers) => Run(source, new FakeHost(answers));
+
+    public static RunResult Run(string source, FakeHost host, RunOptions extra = null)
     {
-        var host = new FakeHost(answers);
-        var end = Bounded(cancel => OogaRunner.Run(source, host,
-            new RunOptions { Seed = 1, MaxSteps = MaxSteps, Cancel = cancel }));
+        var end = Bounded(cancel => OogaRunner.Run(source, host, new RunOptions
+        {
+            Seed = 1, MaxSteps = MaxSteps, Cancel = cancel, FileName = extra?.FileName ?? "main.ooga",
+            Arguments = extra?.Arguments, Actions = extra?.Actions, AllowCSharp = extra?.AllowCSharp ?? true,
+        }));
         return new RunResult(host.Output, end, host);
     }
 
@@ -45,13 +75,13 @@ public static class O
     public static string Out(string source, params string[] answers) => Run(source, answers).Output;
 
     // Run a program that must fail, and return the ooga error.
-    public static OogaError Fails(string source, params string[] answers)
+    public static OogaError Fails(string source, params string[] answers) => Fails(source, new FakeHost(answers));
+
+    public static OogaError Fails(string source, FakeHost host, RunOptions extra = null)
     {
-        var host = new FakeHost(answers);
         try
         {
-            Bounded(cancel => OogaRunner.Run(source, host,
-                new RunOptions { Seed = 1, MaxSteps = MaxSteps, Cancel = cancel }));
+            Run(source, host, extra);
         }
         catch (OogaError e)
         {

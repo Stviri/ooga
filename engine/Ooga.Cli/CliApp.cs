@@ -15,11 +15,12 @@ public static class CliApp
     public static int Run(string[] args, TextReader input, TextWriter output, TextWriter error,
         bool color = false, bool realWait = true)
     {
-        if (args.Length != 1 || args[0] is "-h" or "--help" or "/?")
+        if (args.Length == 0 || args[0] is "-h" or "--help" or "/?")
         {
             output.WriteLine("ooga run ooga files.");
             output.WriteLine("use like this:  ooga hello.ooga");
-            return args.Length == 1 ? Ok : UsageProblem;
+            output.WriteLine("words after the file name go to the script: me arguments");
+            return args.Length == 0 ? UsageProblem : Ok;
         }
 
         string path = args[0];
@@ -34,14 +35,15 @@ public static class CliApp
         string source = File.ReadAllText(path, Encoding.UTF8);
         try
         {
-            OogaRunner.Run(source, new ConsoleHost(input, output, realWait));
+            OogaRunner.Run(source, new ConsoleHost(input, output, realWait),
+                new RunOptions { FileName = path, Arguments = args.Skip(1).ToArray() });
             output.Flush();
             return Ok;
         }
         catch (OogaError e)
         {
             output.Flush();
-            ShowError(error, e.Report(path, source), color);
+            ShowError(error, e.Report(), color);
             return ScriptProblem;
         }
         catch (Exception e) when (e is not OperationCanceledException)

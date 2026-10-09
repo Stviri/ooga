@@ -18,6 +18,21 @@ public interface IOogaHost
     void Wait(double seconds);
 }
 
+// A host that also has files. Needed for "use" and for read_file / write_file / add_to_file / file_exists.
+// Hosts without files (a game, a web page) simply do not implement this.
+public interface IOogaFiles
+{
+    string ReadFile(string path);
+    void WriteFile(string path, string text, bool add);
+    bool FileExists(string path);
+
+    // Finds the script named in 'use "path"', written inside the script fromFile.
+    // Key must be the same for the same file (so it is only used once). Name is shown in error messages.
+    LoadedScript LoadScript(string path, string fromFile);
+}
+
+public record LoadedScript(string Key, string Name, string Text);
+
 public class RunOptions
 {
     // Same seed = same "random" numbers every run. Null = different every run.
@@ -32,6 +47,18 @@ public class RunOptions
 
     // Lets the caller stop a running program from outside.
     public CancellationToken Cancel { get; init; }
+
+    // The name shown in errors for the main script, and used to find files named in "use".
+    public string FileName { get; init; } = "script";
+
+    // What "me arguments" gives: extra words typed after the file name.
+    public IReadOnlyList<string> Arguments { get; init; }
+
+    // Extra actions the program running ooga provides (for example a game engine adapter).
+    public IEnumerable<OogaAction> Actions { get; init; }
+
+    // Allow the csharp, csharp_new, csharp_call, csharp_get and csharp_set actions.
+    public bool AllowCSharp { get; init; } = true;
 }
 
 public enum RunEnd { Finished, Died }
@@ -40,11 +67,19 @@ public enum RunEnd { Finished, Died }
 public static class OogaRunner
 {
     // Read and check a script without running it. Throws OogaError on mistakes.
-    public static OogaProgram Compile(string source)
+    public static OogaProgram Compile(string source, IOogaHost host = null, RunOptions options = null)
     {
-        var program = Parser.Parse(Lexer.Run(source));
-        Checker.Check(program);
-        return program;
+        options ??= new RunOptions();
+        var sources = new Dictionary<string, string> { [options.FileName] = source };
+        try
+        {
+            return CompileInto(source, host, options, sources);
+        }
+        catch (OogaError e)
+        {
+            Attach(e, options, sources);
+            throw;
+        }
     }
 
     // Read, check and run a script. Throws OogaError on mistakes.
@@ -52,6 +87,7 @@ public static class OogaRunner
     public static RunEnd Run(string source, IOogaHost host, RunOptions options = null)
     {
         options ??= new RunOptions();
+        var sources = new Dictionary<string, string> { [options.FileName] = source };
         RunEnd end = RunEnd.Finished;
         Exception failure = null;
 
@@ -59,7 +95,8 @@ public static class OogaRunner
         {
             try
             {
-                end = Interpreter.Run(Compile(source), host, options);
+                var program = CompileInto(source, host, options, sources);
+                end = Interpreter.Run(program, host, options);
             }
             catch (Exception e)
             {
@@ -69,8 +106,72 @@ public static class OogaRunner
         thread.Start();
         thread.Join();
 
+        if (failure is OogaError oe) Attach(oe, options, sources);
         if (failure != null)
             System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
         return end;
+    }
+
+    // All actions ooga knows before reading the script: the standard ones plus the host's.
+    public static Dictionary<string, OogaAction> KnownActions(RunOptions options)
+    {
+        var all = new Dictionary<string, OogaAction>();
+        foreach (var a in Library.Standard.Values)
+            if (options.AllowCSharp || !a.Name.StartsWith("csharp", StringComparison.Ordinal))
+                all[a.Name] = a;
+        foreach (var a in options.Actions ?? Enumerable.Empty<OogaAction>())
+            all[a.Name] = a;
+        return all;
+    }
+
+    static OogaProgram CompileInto(string source, IOogaHost host, RunOptions options, Dictionary<string, string> sources)
+    {
+        var program = Parser.Parse(Lexer.Run(source, options.FileName));
+        var used = new HashSet<string> { "main:" + options.FileName };
+        program.Body = Link(program.Body, host as IOogaFiles, used, sources, 0);
+        Checker.Check(program, KnownActions(options));
+        return program;
+    }
+
+    // Replaces each 'use "file"' line with the lines of that file (each file only once).
+    static List<Stmt> Link(List<Stmt> body, IOogaFiles files, HashSet<string> used, Dictionary<string, string> sources, int depth)
+    {
+        var result = new List<Stmt>();
+        foreach (var s in body)
+        {
+            if (s is not UseStmt u)
+            {
+                result.Add(s);
+                continue;
+            }
+            if (files == null)
+                throw new OogaError(u, "use need files, but ooga is running somewhere with no files.");
+            if (depth > 50)
+                throw new OogaError(u, "too many files using other files. ooga dizzy.");
+
+            LoadedScript loaded;
+            try
+            {
+                loaded = files.LoadScript(u.Path, u.File);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+                throw new OogaError(u, $"ooga no can use \"{u.Path}\": {e.Message}");
+            }
+            if (loaded == null)
+                throw new OogaError(u, $"ooga no find file to use: \"{u.Path}\"");
+            if (!used.Add(loaded.Key)) continue;
+
+            sources[loaded.Name] = loaded.Text;
+            var module = Parser.Parse(Lexer.Run(loaded.Text, loaded.Name));
+            result.AddRange(Link(module.Body, files, used, sources, depth + 1));
+        }
+        return result;
+    }
+
+    static void Attach(OogaError e, RunOptions options, Dictionary<string, string> sources)
+    {
+        e.File ??= options.FileName;
+        if (e.SourceText == null && sources.TryGetValue(e.File, out var text)) e.SourceText = text;
     }
 }
