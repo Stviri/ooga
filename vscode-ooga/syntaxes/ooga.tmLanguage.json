@@ -41,13 +41,13 @@
     },
     "keywords": {
       "patterns": [
-        { "match": "\\b(if|else|repeat|while|count|from|to|stop|skip|give|wait|when)\\b", "name": "keyword.control.ooga" },
-        { "match": "\\b(has|can|is)\\b", "name": "storage.type.ooga" },
-        { "match": "\\b(and|or|not|same|big|small|gain|lose)\\b", "name": "keyword.operator.word.ooga" },
+        { "match": "\\b(if|else|repeat|while|count|from|to|each|in|stop|skip|give|wait|when|try|oops|fail|use)\\b", "name": "keyword.control.ooga" },
+        { "match": "\\b(has|can|is|list|box|action)\\b", "name": "storage.type.ooga" },
+        { "match": "\\b(and|or|not|same|big|small|gain|lose|of|item|size|kind)\\b", "name": "keyword.operator.word.ooga" },
         { "match": "\\b(yes|no|nothing)\\b", "name": "constant.language.ooga" },
         { "match": "\\b(say|ask|random|die)\\b", "name": "support.function.ooga" },
         { "match": "\\bme\\b", "name": "variable.language.ooga" },
-        { "match": "[+\\-*/]", "name": "keyword.operator.arithmetic.ooga" }
+        { "match": "[+\\-*/%]", "name": "keyword.operator.arithmetic.ooga" }
       ]
     }
   }

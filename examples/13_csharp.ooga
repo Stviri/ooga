@@ -1,0 +1,25 @@
+# the C# door: ooga can use anything C# has.
+# write the full C# name in quotes, then what to use, then the things to hand it.
+
+# a static method and a static value
+say me csharp "System.Math" "Sqrt" 144
+say me round_to (me csharp "System.Math" "PI") 2
+
+# make a C# thing and use its methods
+me has sb me csharp_new "System.Text.StringBuilder"
+me csharp_call sb "Append" "ooga "
+me csharp_call sb "Append" "booga"
+say sb
+
+# properties of a thing
+say me csharp_get "caveman" "Length"
+say me csharp_call "caveman" "ToUpper"
+
+# C# lists come back as ooga lists
+say me csharp_call "rock,stick,fire" "Split" ","
+
+# LINQ, with an ooga action as the test
+me can is_big n
+    give n is big 10
+
+say me csharp "System.Linq.Enumerable" "Where" (list 5 20 8 30) (action is_big)

@@ -1,0 +1,20 @@
+# actions are values too: "action double" hands the action itself to someone else.
+
+me can double n
+    give n * 2
+
+me can is_even n
+    give n % 2 is 0
+
+me can name_size word
+    give size of word
+
+me has nums me numbers 1 6
+say nums
+say me change_each nums (action double)
+say me keep nums (action is_even)
+say me sort_by (list "mammoth" "ox" "cat") (action name_size)
+
+# hold an action in a thing, and call it later
+me has todo action double
+say me call todo 21

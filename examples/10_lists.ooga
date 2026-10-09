@@ -1,0 +1,33 @@
+# lists: many things in one thing.
+# items are counted 1, 2, 3...
+
+me has scores list 40 75 12
+say "scores: " + scores
+say "how many: " + size of scores
+say "first: " + item 1 of scores
+
+# gain adds to the end, lose takes out
+scores gain 99
+scores lose 12
+say "now: " + scores
+
+# each walks through every item
+me has total 0
+each s in scores
+    total gain s
+say "total: " + total
+say "best: " + (me biggest scores)
+say "sorted: " + (me sort scores)
+
+# has checks what is inside
+if scores has 99
+    say "someone got 99!"
+
+# change one item
+item 1 of scores is 41
+say "fixed: " + scores
+
+# text works like a list of letters
+me has word "ooga"
+each letter in word
+    say letter

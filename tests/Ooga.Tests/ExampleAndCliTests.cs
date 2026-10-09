@@ -31,6 +31,8 @@ public class ExampleTests
         {
             "01_hello.ooga", "02_calculator.ooga", "03_counting.ooga", "04_guess_number.ooga",
             "05_actions.ooga", "06_player.ooga", "07_mistakes.ooga", "08_shop.ooga", "09_fizzbuzz.ooga",
+            "10_lists.ooga", "11_boxes.ooga", "12_try_and_files.ooga", "13_csharp.ooga",
+            "14_action_values.ooga", "15_use.ooga",
         }, files);
     }
 
@@ -87,6 +89,82 @@ public class ExampleTests
         var run = Cli.Example("04_guess_number.ooga", "0", "11", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
         Assert.Contains("too small", run.Out);
         Assert.Contains("too big", run.Out);
+    }
+
+    [Fact]
+    public void Guess_number_handles_words_instead_of_numbers()
+    {
+        var run = Cli.Example("04_guess_number.ooga", "grok", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+        Assert.Equal(0, run.Exit);
+        Assert.Contains("your guess? that not a number. try again.\n", run.Out);
+        var m = System.Text.RegularExpressions.Regex.Match(run.Out, @"yes! it was (\d+)\. you took (\d+) tries\.");
+        Assert.Equal(m.Groups[1].Value, m.Groups[2].Value);   // the word did not count as a try
+    }
+
+    [Fact]
+    public void Lists()
+    {
+        var run = Cli.Example("10_lists.ooga");
+        Assert.Equal((0, ""), (run.Exit, run.Err));
+        Assert.Equal(string.Join("\n",
+            "scores: list 40 75 12", "how many: 3", "first: 40", "now: list 40 75 99", "total: 214", "best: 99",
+            "sorted: list 40 75 99", "someone got 99!", "fixed: list 41 75 99", "o", "o", "g", "a") + "\n", run.Out);
+    }
+
+    [Fact]
+    public void Boxes()
+    {
+        var run = Cli.Example("11_boxes.ooga");
+        Assert.Equal((0, ""), (run.Exit, run.Err));
+        Assert.Equal(string.Join("\n",
+            "box name \"grok\" health 100 club no", "grok get hit. health now 70", "grok pick up club", "has club? yes",
+            "grok get hit. health now 10", "zug get hit. health now -10", "zug is down!",
+            "list (box name \"grok\" health 10 club yes) (box name \"zug\" health (-10) club no)") + "\n", run.Out);
+    }
+
+    [Fact]
+    public void Try_and_files()
+    {
+        File.Delete("cave_save.txt");
+        try
+        {
+            var first = Cli.Example("12_try_and_files.ooga");
+            Assert.Equal((0, ""), (first.Exit, first.Err));
+            Assert.StartsWith("no save yet (read_file no find file: cave_save.txt)\nold best: 0\n", first.Out);
+            Assert.Contains("new best!", first.Out);
+            Assert.EndsWith("caught: age no can be below 0, but got -5\n", first.Out);
+
+            string saved = File.ReadAllText("cave_save.txt");
+            var second = Cli.Example("12_try_and_files.ooga");
+            Assert.StartsWith($"old best: {saved}\n", second.Out);
+        }
+        finally
+        {
+            File.Delete("cave_save.txt");
+        }
+    }
+
+    [Fact]
+    public void CSharp()
+    {
+        var run = Cli.Example("13_csharp.ooga");
+        Assert.Equal((0, ""), (run.Exit, run.Err));
+        Assert.Equal(string.Join("\n", "12", "3.14", "ooga booga", "7", "CAVEMAN", "list \"rock\" \"stick\" \"fire\"", "list 20 30") + "\n", run.Out);
+    }
+
+    [Fact]
+    public void Action_values()
+    {
+        var run = Cli.Example("14_action_values.ooga");
+        Assert.Equal((0, ""), (run.Exit, run.Err));
+        Assert.Equal(string.Join("\n", "list 1 2 3 4 5 6", "list 2 4 6 8 10 12", "list 2 4 6", "list \"ox\" \"cat\" \"mammoth\"", "42") + "\n", run.Out);
+    }
+
+    [Fact]
+    public void Use_another_file()
+    {
+        var run = Cli.Example("15_use.ooga");
+        Assert.Equal((0, "WELCOME TO BIG CAVE!\n*****\n"), (run.Exit, run.Out));
     }
 
     [Fact]
