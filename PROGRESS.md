@@ -41,6 +41,8 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 | C# door | `csharp`, `csharp_new`, `csharp_call`, `csharp_get`, `csharp_set`; values convert both ways; ooga actions become C# delegates; generic methods and LINQ work |
 | Console | `say`, `ask`, `random A to B`, `wait N`, `me die`, `me arguments` |
 | Talk mode | `ooga --talk`: type pieces, things are kept, a value alone is shown |
+| Windows setup | `install.ps1`: ooga on the user's PATH, `.ooga` icon and double-click to run (`ooga-run.cmd`), VS Code extension; `uninstall.ps1` undoes it. Per-user only, no administrator rights |
+| VS Code extension 0.2 | colours, push-in, ooga file icon, Run button (also Ctrl+F5 and right-click **Run Ooga File**), `ooga.command` setting |
 | Script checks | `ooga --test examples tests/cases`: every script is compared with `expected/NAME.out` (typed answers from `.in`, words from `.args`); `--make-expected` writes missing ones; `--seed N` for repeatable random |
 | Errors | file, line, column, the code line, a `^` pointer, caveman message, "you mean ...?" hints |
 | Safety | step limit and cancellation, recursion limit, big stack, cycle-safe showing of lists |
@@ -120,11 +122,13 @@ Expected output for these was written by hand from the rules **before** running 
 
 Every test runs with a 10-second wall-clock limit and a 2,000,000-step limit.
 
+Windows setup checks (cloud machine, PowerShell 7.4 installed as a .NET tool): all `.ps1` files parse; `tests/setup/windows-setup.tests.ps1` passes 14 checks of the PATH and double-click logic; `install.ps1` refuses to run off Windows; `pack.ps1 -NoInstall` builds a `.vsix` that contains every file `package.json` names; the Run button's command lookup passes 5 Node checks. The registry, PATH and VS Code steps themselves can only be tried on Windows.
+
 Also checked by hand with the published `bin/ooga.dll`: all 15 examples (exit code 0, and 1 for `07_mistakes` on purpose), a talk-mode session, nested `use` started from another folder, and that `--test` says WRONG (exit 1) when an expected file is changed on purpose.
 
 ## Next recommended tasks
 
-1. **Finish the Windows check**: `.\ooga --test examples tests\cases` already passes on Windows. Still to try there: `.\ooga --talk`, Ctrl+Shift+B in VS Code, and reinstalling the VS Code colours (`vscode-ooga\pack.ps1`) for the new words.
+1. **Try the Windows setup**: `powershell -ExecutionPolicy Bypass -File .\install.ps1`, then in a new terminal `ooga examples\01_hello.ooga` from another folder, double-click a `.ooga` file, and press the Run button in VS Code. None of this could be run in the cloud machine (no Windows, no VS Code).
 2. **Write a bigger program yourself** (a text adventure with boxes for rooms, or a score tracker with files) and note what felt awkward.
 3. **Move from .NET 8 to .NET 10** before 10 November 2026: install the .NET 10 runtime, change `net8.0` to `net10.0` in `Directory.Build.props`, rebuild `bin`.
 4. Then the **Godot adapter**: a new project that implements `IOogaHost`, adds game actions through `RunOptions.Actions`, and turns `when` into engine events.
