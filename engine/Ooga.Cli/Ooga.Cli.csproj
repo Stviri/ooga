@@ -1,13 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- The "ooga" command: reads a .ooga file and runs it in the console. -->
+  <!-- The "ooga" command: reads a .ooga file and runs it in the console.
+       Built twice: net8.0 (any computer, no windows) and net8.0-windows (Windows, with real windows and buttons).
+       bin\ooga.exe is the Windows one; it needs the .NET Desktop Runtime. -->
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <TargetFramework></TargetFramework>
+    <TargetFrameworks>net8.0;net8.0-windows</TargetFrameworks>
     <AssemblyName>ooga</AssemblyName>
     <RootNamespace>Ooga.Cli</RootNamespace>
     <!-- Run on .NET 8, or on a newer .NET if 8 is not installed. -->
     <RollForward>Major</RollForward>
+    <!-- lets the Windows version be built on Linux and macOS too -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <DefineConstants>$(DefineConstants);OOGA_WINDOWS</DefineConstants>
+    <ApplicationIcon>..\..\icons\ooga.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <!-- Windows Forms, referenced directly (works with every .NET SDK, also ones without the Windows Desktop add-on) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0-windows'">
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Ooga.Core\Ooga.Core.csproj" />

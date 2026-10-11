@@ -31,6 +31,14 @@ function Get-OpenCommand([string]$ComSpec, [string]$Runner) {
     return "`"$ComSpec`" /c `"`"$Runner`" `"%1`"`""
 }
 
+# Is the .NET Desktop Runtime (8 or newer) in this "dotnet --list-runtimes" output? ooga.exe needs it (for windows and buttons).
+function Test-DesktopRuntime([string[]]$RuntimeLines) {
+    foreach ($line in $RuntimeLines) {
+        if ($line -match '^Microsoft\.WindowsDesktop\.App (\d+)\.' -and [int]$Matches[1] -ge 8) { return $true }
+    }
+    return $false
+}
+
 # ---------- Windows-only helpers ----------
 
 function Assert-Windows {

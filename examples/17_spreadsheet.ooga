@@ -1,0 +1,19 @@
+# spreadsheets: write a CSV file, read it back as boxes, and work with the rows.
+
+me has players list
+    box name "grok" score 90 city "Cave, North"
+    box name "zug" score 75 city "Rock"
+    box name "ugg" score 60 city "Hut"
+me write_csv "players.csv" players
+say me read_file "players.csv"
+
+me has rows me read_csv "players.csv"
+me has total 0
+each row in rows
+    total gain score of row
+say "average score: " + (total / size of rows)
+
+me can by_score row
+    give score of row
+me has best item (size of rows) of (me sort_by rows (action by_score))
+say "best: " + name of best + " from " + city of best

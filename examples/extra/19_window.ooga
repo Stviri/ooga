@@ -1,0 +1,28 @@
+# a real window with buttons (needs Windows and the Windows ooga.exe, so it is not part of ooga --test).
+
+me has clicks 0
+me has win me window "Ooga Greeter"
+
+me label win "What is your name?"
+me has name_box me text_box win
+me has answer me label win ""
+me has counter me label win "clicked 0 times"
+me has loud me check_box win "shout it"
+
+me can greet
+    clicks gain 1
+    me has hello "ooga, " + text of name_box + "!"
+    if checked of loud
+        hello is me upper hello
+    text of answer is hello
+    text of counter is "clicked " + clicks + " times"
+
+me can done
+    me popup ("bye, " + text of name_box)
+    me close_window win
+
+me button win "Greet" (action greet)
+me button win "Close" (action done)
+me open_window win
+
+say "window closed after " + clicks + " clicks"

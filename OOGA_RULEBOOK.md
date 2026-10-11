@@ -279,6 +279,117 @@ Use them like your own: `say me round 2.5`. Their names can not be taught again.
 | `me add_to_file path x` | adds x at the end of the file |
 | `me file_exists path` | yes or no |
 
+## Files and folders
+
+| Ooga | Gives |
+|---|---|
+| `me files_in folder` | list of the files in a folder (`"."` = this folder) |
+| `me folders_in folder` | list of the folders in a folder |
+| `me folder_exists path` | yes or no |
+| `me make_folder path` | makes the folder (and any folders above it) |
+| `me move_file from to` | moves (or renames) a file. If `to` is a folder, the file goes inside it |
+| `me copy_file from to` | copies a file, the same way |
+| `me delete_file path` | deletes the file |
+| `me file_size path` | size in bytes |
+| `me read_lines path` | list of the lines in a text file |
+| `me write_lines path bag` | writes each item on its own line |
+| `me join_path a b ...` | one path from pieces: `me join_path "photos" "cat.jpg"` |
+| `me file_name path` / `me file_ending path` / `me file_folder path` | `cat.jpg` / `jpg` / `photos` |
+
+```text
+each file in me files_in "messy"
+    me has place me join_path "tidy" (me file_ending file)
+    if not me folder_exists place
+        me make_folder place
+    me move_file file place
+```
+
+## Spreadsheets (CSV)
+
+A CSV file is a spreadsheet saved as text (Excel and Google Sheets can save and open them).
+
+| Ooga | Gives |
+|---|---|
+| `me read_csv path` | a list of boxes, one per row. The first row names the parts |
+| `me write_csv path rows` | writes a list of boxes (the part names become the first row) |
+| `me from_csv text` / `me to_csv rows` | the same, with text instead of a file |
+
+```text
+each row in me read_csv "scores.csv"
+    say name of row + " scored " + score of row
+```
+
+Plain numbers in cells become numbers. Cells with commas or quotes are handled. Files that use `;` instead of `,` work too.
+
+## JSON and the web
+
+JSON is how most websites and APIs send data. It turns into ooga boxes and lists.
+
+| Ooga | Gives |
+|---|---|
+| `me web_get url` | the page or answer as text |
+| `me web_get_json url` | the answer, already turned into boxes and lists |
+| `me web_post url data` | sends data (a box or list goes as JSON, text as text) and gives the answer |
+| `me from_json text` / `me to_json value` | JSON text to boxes and lists, and back |
+
+```text
+me has user me web_get_json "https://api.github.com/users/octocat"
+say name of user
+```
+
+No internet, a missing page (404) or a slow site (more than 30 seconds) are problems `try` can catch.
+
+## The clock
+
+`me now` gives a box: `year`, `month`, `day`, `hour`, `minute`, `second`, `weekday` (like `"Monday"`).
+
+```text
+me has t me now
+say "today is " + weekday of t
+```
+
+## Windows and buttons
+
+Real windows with buttons, on Windows. Things go in the window top to bottom, in the order you make them.
+
+```text
+me has win me window "Greeter"
+me label win "your name?"
+me has name_box me text_box win
+me has answer me label win ""
+
+me can greet
+    text of answer is "ooga, " + text of name_box + "!"
+
+me button win "Greet" (action greet)
+me open_window win
+```
+
+| Ooga | Makes |
+|---|---|
+| `me window title` | a new window |
+| `me label win text` | text to read |
+| `me button win text (action name)` | a button. Clicking it runs the action (an action with no things) |
+| `me text_box win` | a box to type in (`me text_box win "start text"` too) |
+| `me check_box win text` | a box to tick |
+| `me list_box win bag` | a list to pick from |
+| `me open_window win` | shows the window, and waits until it is closed |
+| `me close_window win` | closes it (for example from a button) |
+| `me popup text` | a small message window with OK |
+| `me pick_file` / `me pick_folder` | lets the person choose; gives the path, or `nothing` if they cancel |
+
+Parts, read and changed with `of`:
+
+| Thing | Parts |
+|---|---|
+| window | `text` (the title), `width`, `height` |
+| label, button, text box | `text` |
+| check box | `text`, `checked` (yes or no) |
+| list box | `items` (a list), `picked` (the picked item, or `nothing`) |
+
+- A problem in a button's action closes the window and is shown like any other problem, with its line.
+- Windows need Windows and the .NET Desktop Runtime. `ooga --test` never opens windows: a script that does stops there with a problem.
+
 ## The C# door
 
 Ooga can use anything C# and .NET have. Write the full C# name in quotes.
@@ -299,6 +410,8 @@ Ooga can use anything C# and .NET have. Write the full C# name in quotes.
 - Generic methods (like `Array.Find` or LINQ `Where`) guess their type from what you hand them.
 - Generic types need the C# long name: `"System.Collections.Generic.List`1[System.String]"`.
 - Problems inside C# become ooga problems ("C# say problem: ...") that `try` can catch.
+- Parts of a C# thing work like box parts: `length of sb`, `length of sb is 4` (big or small letters do not matter). `size of` works on C# lists too.
+- Most of the time you do not need the door: files, spreadsheets, JSON, the web, the clock and windows all have ooga words (above).
 
 ## Checking your scripts
 

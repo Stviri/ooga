@@ -1,0 +1,18 @@
+# folders and files: make a messy folder, then tidy it into one folder per file ending.
+
+me make_folder "messy"
+each name in list "cat.jpg" "dog.jpg" "notes.txt" "song.mp3"
+    me write_file (me join_path "messy" name) ("pretend " + name)
+
+each file in me files_in "messy"
+    me has ending me file_ending file
+    me has place me join_path "tidy" ending
+    if not me folder_exists place
+        me make_folder place
+    me move_file file place
+
+each folder in me folders_in "tidy"
+    say (me file_name folder) + ":"
+    each file in me files_in folder
+        say "    " + (me file_name file) + " (" + (me file_size file) + " bytes)"
+say "messy folder now has " + size of (me files_in "messy") + " files"

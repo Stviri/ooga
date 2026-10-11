@@ -40,6 +40,12 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 | Library | round, round_to, round_down, round_up, positive, power, root, biggest, smallest, numbers, upper, lower, trim, split, join, replace, starts_with, ends_with, number, text, piece, find, reverse, sort, take, put_at, keys, copy, pick, shuffle, call, keep, change_each, sort_by, time, date, arguments, read_file, write_file, add_to_file, file_exists |
 | C# door | `csharp`, `csharp_new`, `csharp_call`, `csharp_get`, `csharp_set`; values convert both ways; ooga actions become C# delegates; generic methods and LINQ work |
 | Console | `say`, `ask`, `random A to B`, `wait N`, `me die`, `me arguments` |
+| Files and folders | `files_in`, `folders_in`, `folder_exists`, `make_folder`, `move_file`, `copy_file`, `delete_file`, `file_size`, `read_lines`, `write_lines`, `join_path`, `file_name`, `file_ending`, `file_folder` |
+| Spreadsheets | `read_csv` / `write_csv` (rows as boxes named by the header), `from_csv` / `to_csv`; quotes, commas and `;` files handled |
+| JSON and the web | `from_json`, `to_json`, `web_get`, `web_get_json`, `web_post`; 404s, no internet and timeouts are catchable problems |
+| Clock | `now` gives a box: year, month, day, hour, minute, second, weekday |
+| Windows and buttons | `window`, `label`, `button` (runs an action when clicked), `text_box`, `check_box`, `list_box`, `open_window`, `close_window`, `popup`, `pick_file`, `pick_folder`; parts like `text of`, `checked of`, `picked of` |
+| Parts of C# things | `length of sb`, `length of sb is 4`; `size of` a C# list |
 | Talk mode | `ooga --talk`: type pieces, things are kept, a value alone is shown |
 | Windows setup | `install.ps1`: ooga on the user's PATH, `.ooga` icon and double-click to run (`ooga-run.cmd`), VS Code extension; `uninstall.ps1` undoes it. Per-user only, no administrator rights |
 | VS Code extension 0.2 | colours, push-in, ooga file icon, Run button (also Ctrl+F5 and right-click **Run Ooga File**), `ooga.command` setting |
@@ -71,9 +77,19 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 12. **Script checks are repeatable:** random uses seed 1, `wait` does not wait, files go to a fresh temp folder, and line endings do not count. A `.out` file that shows `ooga booga! problem in` means the script must also end with exit code 1.
 13. **`say` shows lists and boxes the way a person writes them**: `sword, bow, dagger` and `name: grok, health: 100`, with `( )` around a list or box inside another one and `(empty)` for an empty one. (Before, `say` showed them as code: `list "sword" "bow" "dagger"`, which beginners found confusing.) Error messages still name the kind: "list of 3 things".
 14. **Items and parts on their own lines**: a line ending in `list` or `box` takes the pushed-in lines under it as its items or parts, one per line. On its own line an item or part value can be any value (`x * 2`), because nothing else shares the line. Several items on one line under `list` is a mistake with its own message; the one-line form `list 1 2 3` is unchanged.
-15. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
+15. **Ooga words for the outside world** (files, CSV, JSON, web, clock, windows) instead of C# names. The C# door stays for everything else, and parts of C# things read like box parts.
+16. **Windows use Windows Forms**: native look, no extra files to ship. The Windows `ooga.exe` therefore needs the .NET **Desktop** Runtime (`install.ps1` checks and offers to install it). Things stack top to bottom, so no coordinates are needed. Buttons run ooga actions; a problem in one closes the window and is reported with its line.
+17. **Windows are a host feature** (`IOogaWindows`), like files: the core has the words, the `ooga` command draws them with Windows Forms, tests use a pretend window system where a script types and clicks, and a game engine can draw them its own way later.
+18. **`ooga --test` never opens windows**: checks use a host with no windows, so a check can never wait for a click.
+19. **Any failure inside C# becomes an ooga problem** ("C# say problem: ..."), including async C# methods, so `try` can always catch it.
+20. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
 
 ## Limitations (known)
+
+- **Windows and buttons have not been clicked on a real Windows screen yet.** The Windows Forms code compiles (the Windows `ooga.exe` is built here, with the ooga icon inside), and all window logic is tested with a pretend window system, but the cloud machine cannot open windows.
+- Windows: things go top to bottom only (no side-by-side layout), only button clicks run actions (no "when typed" or timers yet), no pictures or drawing.
+- Web: no custom headers or log-ins (API keys in the address work); answers are text or JSON.
+- `bin/ooga.exe` needs the .NET Desktop Runtime; Linux and macOS run ooga from source with `ooga.sh` (needs the .NET SDK), without windows.
 
 - No classes or "kinds" with their own actions. Use boxes plus actions that take the box.
 - C# door: no `ref` / `out` parameters, no indexers by name (use `get_Item`), no events, no generic **types** without the long name (`` List`1[System.String] ``), and no extension methods called as `x.Method()` (call them on their static class, like `System.Linq.Enumerable`).
@@ -88,9 +104,9 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 
 Command: `dotnet test Ooga.sln --blame-hang-timeout 2m` (on Linux, .NET SDK 8.0.131).
 
-Result: **552 passed, 0 failed, 0 skipped** (about 2 seconds).
+Result: **600 passed, 0 failed, 0 skipped** (about 2 seconds).
 
-Also: `ooga --test examples tests/cases docs/ooga-vs-csharp` → **44 ok, 0 wrong** (15 examples + 19 cases + 10 C# comparison programs), run with the published `bin/ooga.dll`.
+Also: `ooga --test examples tests/cases docs/ooga-vs-csharp` → **46 ok, 0 wrong** (17 examples + 19 cases + 10 C# comparison programs), run with the cross-platform build (`ooga.sh`), since the Windows `bin/ooga.exe` cannot run in the cloud machine.
 
 | Test file | What it covers |
 |---|---|

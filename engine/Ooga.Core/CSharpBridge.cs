@@ -89,6 +89,40 @@ public static class CSharpBridge
         });
     }
 
+    // "count of names": a property or field of a C# thing, by name (big or small letters do not matter).
+    public static object GetPart(ActionCall c, object target, string name)
+    {
+        var m = GetMember(target.GetType(), name, Instance)
+                ?? throw c.Problem($"{target.GetType().Name} no have part {name}. {PartList(target.GetType())}");
+        return Read(c, m, target);
+    }
+
+    // "text of label is \"hi\"": change a property or field of a C# thing.
+    public static void SetPart(ActionCall c, object target, string name, object value)
+    {
+        var type = target.GetType();
+        switch (GetMember(type, name, Instance))
+        {
+            case PropertyInfo p when p.CanWrite && p.SetMethod?.IsPublic == true:
+                Catch(c, () => { p.SetValue(target, Convert(c, value, p.PropertyType)); return null; });
+                return;
+            case FieldInfo f when !f.IsInitOnly && !f.IsLiteral:
+                Catch(c, () => { f.SetValue(target, Convert(c, value, f.FieldType)); return null; });
+                return;
+            case null:
+                throw c.Problem($"{type.Name} no have part {name}. {PartList(type)}");
+            default:
+                throw c.Problem($"{type.Name}'s {name} can only be read, not changed.");
+        }
+    }
+
+    static string PartList(Type type)
+    {
+        var names = type.GetProperties(Instance).Where(p => p.GetIndexParameters().Length == 0).Select(p => p.Name)
+            .Concat(type.GetFields(Instance).Select(f => f.Name)).Distinct().OrderBy(n => n).Take(12).ToList();
+        return names.Count == 0 ? "it has no parts." : "it has: " + string.Join(", ", names.Select(n => n.ToLowerInvariant()));
+    }
+
     // How "say" shows a C# thing: its own ToString.
     public static string ShowThing(object v)
     {

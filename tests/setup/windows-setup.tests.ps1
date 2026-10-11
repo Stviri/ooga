@@ -28,5 +28,11 @@ Check 'add then remove = start'        (Remove-PathEntry (Add-PathEntry 'C:\a;C:
 Check 'double-click command'           (Get-OpenCommand 'C:\WINDOWS\system32\cmd.exe' "$ooga\ooga-run.cmd") `
                                        ('"C:\WINDOWS\system32\cmd.exe" /c ""C:\Users\Joni Smith\Desktop\ooga\ooga-run.cmd" "%1""')
 
+$runtimes = @('Microsoft.AspNetCore.App 8.0.10 [C:\x]', 'Microsoft.NETCore.App 8.0.10 [C:\x]')
+Check 'no desktop runtime'             (Test-DesktopRuntime $runtimes) $false
+Check 'desktop runtime 8'              (Test-DesktopRuntime ($runtimes + 'Microsoft.WindowsDesktop.App 8.0.10 [C:\x]')) $true
+Check 'desktop runtime 10 is fine too' (Test-DesktopRuntime @('Microsoft.WindowsDesktop.App 10.0.1 [C:\x]')) $true
+Check 'desktop runtime 6 is too old'   (Test-DesktopRuntime @('Microsoft.WindowsDesktop.App 6.0.35 [C:\x]')) $false
+
 Write-Host ""
 if ($failed -eq 0) { Write-Host "all setup checks ok." } else { Write-Host "$failed setup checks WRONG."; exit 1 }

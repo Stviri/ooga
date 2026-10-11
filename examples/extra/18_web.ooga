@@ -1,0 +1,7 @@
+# the web: read data from an online API (needs internet, so it is not part of ooga --test).
+
+try
+    me has user me web_get_json "https://api.github.com/users/octocat"
+    say name of user + " has " + public_repos of user + " public repos on GitHub"
+oops why
+    say "no web today: " + why

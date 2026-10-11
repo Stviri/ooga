@@ -1,0 +1,7 @@
+name,score,city
+grok,90,"Cave, North"
+zug,75,Rock
+ugg,60,Hut
+
+average score: 75
+best: grok from Cave, North

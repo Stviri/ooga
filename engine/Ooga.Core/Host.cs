@@ -26,6 +26,16 @@ public interface IOogaFiles
     void WriteFile(string path, string text, bool add);
     bool FileExists(string path);
 
+    // Folders. Paths in the lists come back the way they can be handed in again: the folder joined with the name.
+    bool FolderExists(string path);
+    IReadOnlyList<string> FilesIn(string folder);
+    IReadOnlyList<string> FoldersIn(string folder);
+    void MakeFolder(string path);
+    void MoveFile(string from, string to);
+    void CopyFile(string from, string to);
+    void DeleteFile(string path);
+    long FileSize(string path);
+
     // Finds the script named in 'use "path"', written inside the script fromFile.
     // Key must be the same for the same file (so it is only used once). Name is shown in error messages.
     LoadedScript LoadScript(string path, string fromFile);
@@ -103,6 +113,8 @@ public static class OogaRunner
                 failure = e;
             }
         }, 256 * 1024 * 1024);
+        // Windows (the window kind, with buttons) must be made on an STA thread.
+        if (OperatingSystem.IsWindows()) thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         thread.Join();
 

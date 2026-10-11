@@ -24,6 +24,23 @@ foreach ($needed in 'ooga.cmd', 'ooga-run.cmd', 'bin\ooga.exe', 'icons\ooga.ico'
 Write-Host "setting up ooga from: $root"
 Write-Host ""
 
+# 0. ooga.exe needs the .NET Desktop Runtime (it can open windows with buttons)
+$runtimes = @()
+try { $runtimes = @(& dotnet --list-runtimes 2>$null) } catch { }
+if (Test-DesktopRuntime $runtimes) {
+    Write-Host "[0/3] .NET Desktop Runtime found."
+} else {
+    Write-Host "[0/3] ooga needs the .NET Desktop Runtime 8 (for windows and buttons), and it is not installed."
+    $winget = Get-Command winget -ErrorAction SilentlyContinue
+    if ($winget -and (Read-Host "      install it now with winget? (y/n)") -match '^[yY]') {
+        & winget install --id Microsoft.DotNet.DesktopRuntime.8 -e
+    } else {
+        Write-Host "      install it, then run install.ps1 again:"
+        Write-Host "      winget install --id Microsoft.DotNet.DesktopRuntime.8 -e"
+        Write-Host "      (or download '.NET Desktop Runtime 8' for Windows x64 from https://dotnet.microsoft.com/download/dotnet/8.0)"
+    }
+}
+
 # 1. PATH
 $before = Get-UserPath
 $after = Add-PathEntry $before $root

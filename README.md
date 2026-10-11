@@ -24,7 +24,7 @@ press the **Windows key**, type `powershell`, press **Enter**. Type (or paste) o
 Ooga needs **.NET** (it runs Ooga), **Git** (it downloads Ooga and its updates) and **VS Code** (where you write Ooga). Paste these one at a time:
 
 ```text
-winget install --id Microsoft.DotNet.Runtime.8 -e
+winget install --id Microsoft.DotNet.DesktopRuntime.8 -e
 winget install --id Git.Git -e
 winget install --id Microsoft.VisualStudioCode -e
 ```
@@ -33,7 +33,7 @@ If it asks you to agree to terms, type `Y` and press Enter. If Windows asks "Do 
 
 Then **close PowerShell and open it again**, so it notices the new tools.
 
-> No `winget`? Download the installers instead: [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (pick ".NET Runtime", Windows x64), [Git](https://git-scm.com/download/win), [VS Code](https://code.visualstudio.com/). Click Next through each one.
+> No `winget`? Download the installers instead: [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) (pick ".NET Desktop Runtime", Windows x64), [Git](https://git-scm.com/download/win), [VS Code](https://code.visualstudio.com/). Click Next through each one.
 
 ### Step 2: Download Ooga
 
@@ -69,7 +69,7 @@ The `.\` at the start matters: it tells PowerShell "the ooga in this folder".
 .\ooga --test examples tests\cases
 ```
 
-The last two lines should be `32 ok, 0 wrong.` and `ooga happy.`
+The last two lines should be `36 ok, 0 wrong.` and `ooga happy.`
 
 ### Step 5: Set ooga up on Windows
 
@@ -139,7 +139,7 @@ Running `install.ps1` again is safe. It updates the VS Code extension and the fi
 | `ooga booga! problem in ...ps1 ... no know this sign: $` | You put `ooga` in front of a PowerShell script. Use the Step 5 command instead. |
 | `The term 'ooga' is not recognized` | Open a **new** PowerShell window after Step 5. Inside the `ooga` folder, `.\ooga` (with `.\` in front) always works. |
 | `ooga no find file: ...` | The file name or folder is wrong. Check the spelling, and which folder you are in (`cd` shows it). |
-| `You must install or update .NET to run this application` | Do the .NET part of Step 1, then close and reopen PowerShell. |
+| `You must install or update .NET to run this application` | ooga needs the **.NET Desktop Runtime** (it can open windows). Run `winget install --id Microsoft.DotNet.DesktopRuntime.8 -e` (or `install.ps1`, which offers to), then close and reopen PowerShell. |
 | `'winget' is not recognized` | Use the download links under Step 1. |
 | `'git' is not recognized` or `'code' is not recognized` | Close PowerShell and open it again after installing. If it still happens, reinstall that tool. |
 | `[3/3] VS Code not found` | Install VS Code (Step 1), then run `install.ps1` again. |
@@ -180,7 +180,7 @@ Know some C#, or want to learn it next? **[OOGA_VS_CSHARP.md](OOGA_VS_CSHARP.md)
 - `OOGA_VS_CSHARP.md`: the same programs in Ooga and C#, side by side (code in `docs/ooga-vs-csharp/`)
 - `examples/`: starter scripts
 - `my_scripts/`: your own scripts
-- `bin/`: the ready-made `ooga.exe` runner (`ooga.cmd` and `ooga.sh` start it)
+- `bin/`: the ready-made Windows `ooga.exe` runner (`ooga.cmd` starts it; `ooga.sh` runs ooga from source on Linux and macOS)
 - `engine/`: the C# interpreter
 - `tests/`: automatic checks for the interpreter (`tests/cases/` holds ooga scripts with their expected output)
 - `install.ps1` / `uninstall.ps1`: set ooga up on Windows (PATH, file icon, double-click, VS Code extension), or undo it
@@ -227,5 +227,5 @@ Rebuild the runner after changing engine code (needs the .NET 8 SDK or newer):
 
 ```text
 dotnet test
-dotnet publish engine/Ooga.Cli -c Release -r win-x64 --self-contained false -p:DebugType=none -o bin
+dotnet publish engine/Ooga.Cli -f net8.0-windows -c Release -r win-x64 --self-contained false -p:DebugType=none -o bin
 ```
