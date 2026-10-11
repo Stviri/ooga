@@ -43,7 +43,7 @@ public static class CSharpBridge
                 throw c.Problem($"csharp_new no find a way to make {type.FullName} from {Things(args.Length)}. {Choices(type.GetConstructors(Instance), type.Name)}");
             }
             // A made thing stays a C# thing (even a C# List), so its methods can be called later.
-            return FromCSharp(c, Catch(c, () => ((ConstructorInfo)ctor).Invoke(converted)), keepCollections: true);
+            return Catch(c, () => FromCSharp(c, ((ConstructorInfo)ctor).Invoke(converted), keepCollections: true));
         });
         yield return new("csharp_call", 2, -1, c =>
         {
@@ -151,8 +151,8 @@ public static class CSharpBridge
 
     static object Read(ActionCall c, MemberInfo m, object target) => m switch
     {
-        PropertyInfo p => FromCSharp(c, Catch(c, () => p.GetValue(target))),
-        FieldInfo f => FromCSharp(c, Catch(c, () => f.GetValue(target))),
+        PropertyInfo p => Catch(c, () => FromCSharp(c, p.GetValue(target))),
+        FieldInfo f => Catch(c, () => FromCSharp(c, f.GetValue(target))),
         _ => throw c.Problem("ooga no can read that."),
     };
 
@@ -174,7 +174,7 @@ public static class CSharpBridge
         var (method, converted) = Choose(c, methods, args);
         if (method == null)
             throw c.Problem($"{type.Name}.{name} no take {Things(args.Length)} like that. {Choices(methods, name)}");
-        return FromCSharp(c, Catch(c, () => method.Invoke(target, converted)));
+        return Catch(c, () => FromCSharp(c, method.Invoke(target, converted)));
     }
 
     // Guesses the T in a generic method from the ooga things: numbers -> double, texts -> string, a list of numbers -> double, ...
@@ -262,20 +262,16 @@ public static class CSharpBridge
         {
             return work();
         }
-        catch (TargetInvocationException e) when (e.InnerException is OogaError or DieSignal or OperationCanceledException)
+        catch (Exception e)
         {
-            // Something from ooga itself (an ooga action called by C#): let it keep going as it is.
-            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e.InnerException).Throw();
-            throw;
-        }
-        catch (TargetInvocationException e) when (e.InnerException != null)
-        {
-            throw c.Problem($"C# say problem: {e.InnerException.Message}");
-        }
-        catch (Exception e) when (e is ArgumentException or InvalidOperationException or NotSupportedException
-                                       or MemberAccessException or TargetException)
-        {
-            throw c.Problem($"C# say problem: {e.Message}");
+            var inner = e is TargetInvocationException { InnerException: not null } wrapped ? wrapped.InnerException : e;
+            // Something from ooga itself (an ooga action called by C#, "me die", or ooga being stopped): let it keep going.
+            if (inner is OogaError or DieSignal || (inner is OperationCanceledException && c.Options.Cancel.IsCancellationRequested))
+            {
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(inner).Throw();
+            }
+            // Anything else C# throws (a missing file, no internet, a bad number...) becomes an ooga problem "try" can catch.
+            throw c.Problem($"C# say problem: {inner.Message}");
         }
     }
 
