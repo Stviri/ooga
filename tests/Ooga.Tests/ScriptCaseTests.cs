@@ -129,11 +129,11 @@ public class TestRunnerTests : IDisposable
     {
         Case("a", "say \"made\"");
         var output = new StringWriter { NewLine = "\n" };
-        Assert.Equal(CliApp.Ok, TestRunner.Main(new[] { folder, "--make-expected" }, output));
+        Assert.Equal(CliApp.Ok, TestRunner.Run(new[] { folder, "--make-expected" }, output));
         Assert.Equal("made\n", File.ReadAllText(Path.Combine(folder, "expected", "a.out")));
 
         output = new StringWriter { NewLine = "\n" };
-        Assert.Equal(CliApp.Ok, TestRunner.Main(new[] { folder }, output));
+        Assert.Equal(CliApp.Ok, TestRunner.Run(new[] { folder }, output));
         Assert.EndsWith("1 ok, 0 wrong.\nooga happy.\n", output.ToString());
     }
 
@@ -143,7 +143,7 @@ public class TestRunnerTests : IDisposable
         Case("good", "say 1", "1\n");
         Case("bad", "say 1", "2\n");
         var output = new StringWriter { NewLine = "\n" };
-        Assert.Equal(CliApp.ScriptProblem, TestRunner.Main(new[] { folder }, output));
+        Assert.Equal(CliApp.ScriptProblem, TestRunner.Run(new[] { folder }, output));
         Assert.Contains("WRONG  ", output.ToString());
         Assert.EndsWith("1 ok, 1 wrong.\n", output.ToString());
     }

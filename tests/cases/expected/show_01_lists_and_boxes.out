@@ -1,0 +1,9 @@
+weapons: sword, bow, dagger
+sword, bow, dagger
+bag: (empty)
+bag: rock
+name: grok, health: 100
+hero: name: grok, health: 100
+(name: grok, health: 100), (name: zug, health: 50)
+(1, 2), (3, 4)
+1, (empty), (empty), -5

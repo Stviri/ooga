@@ -30,7 +30,7 @@ public static class CliApp
             return Talk(input, output, error, color, realWait);
 
         if (args[0] == "--test")
-            return TestRunner.Main(args.Skip(1).ToArray(), output);
+            return TestRunner.Run(args.Skip(1).ToArray(), output);
 
         int? seed = null;
         if (args[0] == "--seed")

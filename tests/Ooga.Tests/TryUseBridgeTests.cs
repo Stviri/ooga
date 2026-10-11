@@ -200,7 +200,7 @@ public class CSharpBridgeTests
     [InlineData("me csharp \"System.Environment\" \"NewLine\" is nothing", "no")]
     [InlineData("me csharp_get \"hello\" \"Length\"", "5")]
     [InlineData("me csharp_call \"hello\" \"ToUpper\"", "HELLO")]
-    [InlineData("me csharp_call \"a,b\" \"Split\" \",\"", "list \"a\" \"b\"")]
+    [InlineData("me csharp_call \"a,b\" \"Split\" \",\"", "a, b")]
     [InlineData("me csharp_call \"hello\" \"Substring\" 1 3", "ell")]
     [InlineData("me csharp \"System.DayOfWeek\" \"Monday\"", "Monday")]
     public void Call_into_csharp(string call, string expected)

@@ -69,7 +69,8 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 10. **C# door rules:** objects made with `csharp_new` stay live C# objects, even collections. Results of calls and properties that are sequences become ooga lists, and dictionaries become boxes. Numbers go to `int` / `long` / ... only when they are whole and fit.
 11. **Talk mode** lets an action be taught again (handy while trying things). Files still forbid it.
 12. **Script checks are repeatable:** random uses seed 1, `wait` does not wait, files go to a fresh temp folder, and line endings do not count. A `.out` file that shows `ooga booga! problem in` means the script must also end with exit code 1.
-13. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
+13. **`say` shows lists and boxes the way a person writes them**: `sword, bow, dagger` and `name: grok, health: 100`, with `( )` around a list or box inside another one and `(empty)` for an empty one. (Before, `say` showed them as code: `list "sword" "bow" "dagger"`, which beginners found confusing.) Error messages still name the kind: "list of 3 things".
+14. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
 
 ## Limitations (known)
 

@@ -107,8 +107,8 @@ public class ExampleTests
         var run = Cli.Example("10_lists.ooga");
         Assert.Equal((0, ""), (run.Exit, run.Err));
         Assert.Equal(string.Join("\n",
-            "scores: list 40 75 12", "how many: 3", "first: 40", "now: list 40 75 99", "total: 214", "best: 99",
-            "sorted: list 40 75 99", "someone got 99!", "fixed: list 41 75 99", "o", "o", "g", "a") + "\n", run.Out);
+            "scores: 40, 75, 12", "how many: 3", "first: 40", "now: 40, 75, 99", "total: 214", "best: 99",
+            "sorted: 40, 75, 99", "someone got 99!", "fixed: 41, 75, 99", "o", "o", "g", "a") + "\n", run.Out);
     }
 
     [Fact]
@@ -117,9 +117,9 @@ public class ExampleTests
         var run = Cli.Example("11_boxes.ooga");
         Assert.Equal((0, ""), (run.Exit, run.Err));
         Assert.Equal(string.Join("\n",
-            "box name \"grok\" health 100 club no", "grok get hit. health now 70", "grok pick up club", "has club? yes",
+            "name: grok, health: 100, club: no", "grok get hit. health now 70", "grok pick up club", "has club? yes",
             "grok get hit. health now 10", "zug get hit. health now -10", "zug is down!",
-            "list (box name \"grok\" health 10 club yes) (box name \"zug\" health (-10) club no)") + "\n", run.Out);
+            "(name: grok, health: 10, club: yes), (name: zug, health: -10, club: no)") + "\n", run.Out);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public class ExampleTests
     {
         var run = Cli.Example("13_csharp.ooga");
         Assert.Equal((0, ""), (run.Exit, run.Err));
-        Assert.Equal(string.Join("\n", "12", "3.14", "ooga booga", "7", "CAVEMAN", "list \"rock\" \"stick\" \"fire\"", "list 20 30") + "\n", run.Out);
+        Assert.Equal(string.Join("\n", "12", "3.14", "ooga booga", "7", "CAVEMAN", "rock, stick, fire", "20, 30") + "\n", run.Out);
     }
 
     [Fact]
@@ -157,7 +157,7 @@ public class ExampleTests
     {
         var run = Cli.Example("14_action_values.ooga");
         Assert.Equal((0, ""), (run.Exit, run.Err));
-        Assert.Equal(string.Join("\n", "list 1 2 3 4 5 6", "list 2 4 6 8 10 12", "list 2 4 6", "list \"ox\" \"cat\" \"mammoth\"", "42") + "\n", run.Out);
+        Assert.Equal(string.Join("\n", "1, 2, 3, 4, 5, 6", "2, 4, 6, 8, 10, 12", "2, 4, 6", "ox, cat, mammoth", "42") + "\n", run.Out);
     }
 
     [Fact]

@@ -1,0 +1,20 @@
+# how say shows lists and boxes: like a person writes them
+me is player
+me has weapons list "sword" "bow" "dagger"
+say "weapons: " + weapons
+say weapons
+
+me has bag list
+say "bag: " + bag
+bag gain "rock"
+say "bag: " + bag
+
+me has hero box name "grok" health 100
+say hero
+say "hero: " + hero
+
+me has team list hero (box name "zug" health 50)
+say team
+me has grid list (list 1 2) (list 3 4)
+say grid
+say list 1 (list) (box) (-5)

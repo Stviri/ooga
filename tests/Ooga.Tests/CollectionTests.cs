@@ -7,7 +7,7 @@ public class ListTests
     [Fact]
     public void Make_show_and_measure_lists()
     {
-        Assert.Equal("list\nlist 1 2 3\n3\n0\nlist \"a\" (list 1 2) yes nothing (-1)", O.Out("""
+        Assert.Equal("(empty)\n1, 2, 3\n3\n0\na, (1, 2), yes, nothing, -1", O.Out("""
             me has empty list
             me has bag list 1 2 3
             say empty
@@ -27,13 +27,13 @@ public class ListTests
     [Fact]
     public void Change_an_item()
     {
-        Assert.Equal("list 1 99 3\nlist 1 100 3", O.Out("me has bag list 1 2 3\nitem 2 of bag is 99\nsay bag\nitem 2 of bag gain 1\nsay bag"));
+        Assert.Equal("1, 99, 3\n1, 100, 3", O.Out("me has bag list 1 2 3\nitem 2 of bag is 99\nsay bag\nitem 2 of bag gain 1\nsay bag"));
     }
 
     [Fact]
     public void Gain_adds_to_the_end_and_lose_takes_the_first_match()
     {
-        Assert.Equal("list 1 2 1 3\nlist 2 1 3", O.Out("me has bag list 1 2\nbag gain 1\nbag gain 3\nsay bag\nbag lose 1\nsay bag"));
+        Assert.Equal("1, 2, 1, 3\n2, 1, 3", O.Out("me has bag list 1 2\nbag gain 1\nbag gain 3\nsay bag\nbag lose 1\nsay bag"));
     }
 
     [Fact]
@@ -64,13 +64,13 @@ public class ListTests
     [Fact]
     public void Each_is_safe_when_the_list_changes_inside()
     {
-        Assert.Equal("list 1 2 1 2", O.Out("me has bag list 1 2\neach n in bag\n    bag gain n\nsay bag"));
+        Assert.Equal("1, 2, 1, 2", O.Out("me has bag list 1 2\neach n in bag\n    bag gain n\nsay bag"));
     }
 
     [Fact]
     public void Lists_are_shared_not_copied()
     {
-        Assert.Equal("list 1 2\nlist 1", O.Out("""
+        Assert.Equal("1, 2\n1", O.Out("""
             me has a list 1
             me has b a
             me has c me copy a
@@ -83,7 +83,7 @@ public class ListTests
     [Fact]
     public void Action_can_change_a_list_it_was_given()
     {
-        Assert.Equal("list \"rock\"", O.Out("me has bag list\nme can add_rock sack\n    sack gain \"rock\"\nme add_rock bag\nsay bag"));
+        Assert.Equal("rock", O.Out("me has bag list\nme can add_rock sack\n    sack gain \"rock\"\nme add_rock bag\nsay bag"));
     }
 
     [Fact]
@@ -95,13 +95,13 @@ public class ListTests
     [Fact]
     public void Plus_joins_two_lists()
     {
-        Assert.Equal("list 1 2 3\nbag: list 1", O.Out("say (list 1) + (list 2 3)\nsay \"bag: \" + (list 1)"));
+        Assert.Equal("1, 2, 3\nbag: 1", O.Out("say (list 1) + (list 2 3)\nsay \"bag: \" + (list 1)"));
     }
 
     [Fact]
     public void List_of_lists()
     {
-        Assert.Equal("6\nlist (list 1 2) (list 3 7)", O.Out("""
+        Assert.Equal("6\n(1, 2), (3, 7)", O.Out("""
             me has grid list (list 1 2) (list 3 4)
             say (item 2 of item 1 of grid) * 3
             item 2 of item 2 of grid is 7
@@ -121,7 +121,7 @@ public class BoxTests
     [Fact]
     public void Make_a_box_and_read_parts()
     {
-        Assert.Equal("box health 100 name \"grok\"\n100\ngrok", O.Out("""
+        Assert.Equal("health: 100, name: grok\n100\ngrok", O.Out("""
             me has player box health 100 name "grok"
             say player
             say health of player
@@ -132,7 +132,7 @@ public class BoxTests
     [Fact]
     public void Change_and_add_parts()
     {
-        Assert.Equal("box health 70 speed 5\n71", O.Out("""
+        Assert.Equal("health: 70, speed: 5\n71", O.Out("""
             me has player box health 100
             health of player lose 30
             speed of player is 5
@@ -145,7 +145,7 @@ public class BoxTests
     [Fact]
     public void Boxes_inside_boxes()
     {
-        Assert.Equal("9\nbox pos (box x 9 y 2)", O.Out("""
+        Assert.Equal("9\npos: (x: 9, y: 2)", O.Out("""
             me has p box pos (box x 1 y 2)
             x of pos of p is 9
             say x of pos of p
@@ -156,7 +156,7 @@ public class BoxTests
     [Fact]
     public void Box_as_a_lookup_with_item()
     {
-        Assert.Equal("30\nyes\nno\nlist \"grok\" \"zug\"\n2", O.Out("""
+        Assert.Equal("30\nyes\nno\ngrok, zug\n2", O.Out("""
             me has ages box
             item "grok" of ages is 30
             item "zug" of ages is 25
@@ -208,7 +208,7 @@ public class BoxTests
     [Fact]
     public void Take_removes_a_part()
     {
-        Assert.Equal("1\nbox b 2", O.Out("me has b box a 1 b 2\nsay me take b \"a\"\nsay b"));
+        Assert.Equal("1\nb: 2", O.Out("me has b box a 1 b 2\nsay me take b \"a\"\nsay b"));
     }
 }
 

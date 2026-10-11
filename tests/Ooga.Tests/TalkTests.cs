@@ -27,7 +27,7 @@ public class SessionTests
         talk.Run("bag");
         talk.Run("1 + 2 * 3");
         talk.Run("size of bag");
-        Assert.Equal(new[] { "list 1 2", "7", "2" }, host.Said);
+        Assert.Equal(new[] { "1, 2", "7", "2" }, host.Said);
     }
 
     [Fact]

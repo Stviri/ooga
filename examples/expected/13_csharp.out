@@ -3,5 +3,5 @@
 ooga booga
 7
 CAVEMAN
-list "rock" "stick" "fire"
-list 20 30
+rock, stick, fire
+20, 30
