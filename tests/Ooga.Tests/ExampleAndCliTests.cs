@@ -32,7 +32,7 @@ public class ExampleTests
             "01_hello.ooga", "02_calculator.ooga", "03_counting.ooga", "04_guess_number.ooga",
             "05_actions.ooga", "06_player.ooga", "07_mistakes.ooga", "08_shop.ooga", "09_fizzbuzz.ooga",
             "10_lists.ooga", "11_boxes.ooga", "12_try_and_files.ooga", "13_csharp.ooga",
-            "14_action_values.ooga", "15_use.ooga",
+            "14_action_values.ooga", "15_use.ooga", "16_files.ooga", "17_spreadsheet.ooga",
         }, files);
     }
 

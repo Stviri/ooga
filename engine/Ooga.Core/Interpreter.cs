@@ -289,10 +289,23 @@ public class Interpreter
             case PartExpr p:
             {
                 object holder = Eval(p.Holder);
-                if (holder is not OogaBox box)
-                    throw Problem(p, $"only a box has parts. {TargetName(p.Holder)} is {Values.Describe(holder)}.");
-                box.Set(p.Part, value);
-                break;
+                if (holder is OogaBox box)
+                {
+                    box.Set(p.Part, value);
+                    break;
+                }
+                if (holder is IOogaParts thing)
+                {
+                    string problem = thing.TrySetPart(p.Part, value);
+                    if (problem != null) throw Problem(p, problem);
+                    break;
+                }
+                if (IsCSharpThing(holder))
+                {
+                    CSharpBridge.SetPart(PartCall(p), holder, p.Part, value);
+                    break;
+                }
+                throw Problem(p, $"only a box has parts. {TargetName(p.Holder)} is {Values.Describe(holder)}.");
             }
 
             case ItemExpr i:
@@ -319,6 +332,17 @@ public class Interpreter
                 throw Problem(target, "no can change this.");
         }
     }
+
+    // A thing that came from C# (not one of ooga's own kinds of value).
+    static bool IsCSharpThing(object v) =>
+        v is not (null or double or string or bool or OogaList or OogaBox or ActionValue);
+
+    // Parts of C# things go through the C# door, which wants an ActionCall like the csharp_* actions get.
+    ActionCall PartCall(Node at) => new()
+    {
+        Name = "part", Things = Array.Empty<object>(), At = at, Host = host, Random = rng, Options = options,
+        Started = started, Invoke = (f, things) => CallValue(f, things, at), Wants = Wants,
+    };
 
     static string TargetName(Expr e) => e switch
     {
@@ -362,6 +386,11 @@ public class Interpreter
         return CallAction(av.Name, args, at);
     }
 
+    (int Least, int Most) Wants(ActionValue av) =>
+        actions.TryGetValue(av.Name, out var can)
+            ? (can.Params.Count, can.Params.Count)
+            : (builtIns[av.Name].MinThings, builtIns[av.Name].MaxThings);
+
     object CallAction(string name, object[] args, Node call)
     {
         if (!actions.TryGetValue(name, out var can))
@@ -373,7 +402,7 @@ public class Interpreter
                 {
                     Name = name, Things = args, At = call, Host = host,
                     Random = rng, Options = options, Started = started,
-                    Invoke = (f, things) => CallValue(f, things, call),
+                    Invoke = (f, things) => CallValue(f, things, call), Wants = Wants,
                 });
             }
             catch (OogaError e)
@@ -523,6 +552,14 @@ public class Interpreter
             case PartExpr p:
             {
                 object holder = Eval(p.Holder);
+                if (holder is IOogaParts thing)
+                {
+                    string problem = thing.TryGetPart(p.Part, out var got);
+                    if (problem != null) throw Problem(p, problem);
+                    return got;
+                }
+                if (IsCSharpThing(holder))
+                    return CSharpBridge.GetPart(PartCall(p), holder, p.Part);
                 if (holder is not OogaBox box)
                     throw Problem(p, $"only a box has parts. {TargetName(p.Holder)} is {Values.Describe(holder)}, so it no have {p.Part}.");
                 if (!box.TryGet(p.Part, out var value))
@@ -561,6 +598,7 @@ public class Interpreter
                     OogaList list => (double)list.Items.Count,
                     string text => (double)text.Length,
                     OogaBox box => (double)box.Count,
+                    System.Collections.ICollection things when IsCSharpThing(v) => (double)things.Count,   // a C# list or array
                     _ => throw Problem(size, $"size of {Values.Describe(v)}? only lists, texts and boxes have a size."),
                 };
             }

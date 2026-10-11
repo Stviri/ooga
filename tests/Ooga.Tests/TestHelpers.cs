@@ -4,7 +4,7 @@ namespace Ooga.Tests;
 
 // A pretend outside world: answers come from a list, "say" lines are collected, "wait" does not sleep,
 // and files live in memory.
-public class FakeHost : IOogaHost, IOogaFiles
+public partial class FakeHost : IOogaHost, IOogaFiles, IOogaWindows
 {
     public readonly Dictionary<string, string> Files = new();
 
@@ -28,18 +28,122 @@ public class FakeHost : IOogaHost, IOogaFiles
     public string Output => string.Join("\n", Said);
 
     public string ReadFile(string path) =>
-        Files.TryGetValue(path, out var text) ? text : throw new FileNotFoundException("missing", path);
+        Files.TryGetValue(Clean(path), out var text) ? text : throw new FileNotFoundException("missing", path);
 
-    public void WriteFile(string path, string text, bool add) =>
-        Files[path] = add && Files.TryGetValue(path, out var old) ? old + text : text;
+    public void WriteFile(string path, string text, bool add)
+    {
+        Files[Clean(path)] = add && Files.TryGetValue(Clean(path), out var old) ? old + text : text;
+        MakeFolder(Parent(path));
+    }
 
-    public bool FileExists(string path) => Files.ContainsKey(path);
+    public bool FileExists(string path) => Files.ContainsKey(Clean(path));
+
+    // Folders in memory: a folder exists when it was made, or when a file is inside it.
+    public readonly HashSet<string> Folders = new() { "." };
+    static string Clean(string p) => p.Replace('\\', '/').TrimEnd('/');
+    static string Parent(string p) { int i = Clean(p).LastIndexOf('/'); return i < 0 ? "." : Clean(p)[..i]; }
+    static string Join(string folder, string name) => folder == "." ? name : Clean(folder) + "/" + name;
+    static string NameOf(string p) => Clean(p)[(Clean(p).LastIndexOf('/') + 1)..];
+
+    public bool FolderExists(string path) =>
+        Folders.Contains(Clean(path)) || Files.Keys.Any(f => Parent(f) == Clean(path) || Parent(f).StartsWith(Clean(path) + "/"));
+
+    public IReadOnlyList<string> FilesIn(string folder)
+    {
+        if (!FolderExists(folder)) throw new DirectoryNotFoundException(folder);
+        return Files.Keys.Where(f => Parent(f) == Clean(folder)).Select(f => Join(folder, NameOf(f))).Order(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    public IReadOnlyList<string> FoldersIn(string folder)
+    {
+        if (!FolderExists(folder)) throw new DirectoryNotFoundException(folder);
+        return Folders.Where(f => f != "." && Parent(f) == Clean(folder)).Select(f => Join(folder, NameOf(f))).Order(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
+    public void MakeFolder(string path) { var p = Clean(path); while (p != ".") { Folders.Add(p); p = Parent(p); } }
+
+    // like a real disk, a folder stays when its last file moves out
+    public void MoveFile(string from, string to) { CopyFile(from, to); MakeFolder(Parent(from)); Files.Remove(Clean(from)); }
+
+    public void CopyFile(string from, string to)
+    {
+        if (!Files.TryGetValue(Clean(from), out var text)) throw new FileNotFoundException("missing", from);
+        if (Files.ContainsKey(Clean(to))) throw new IOException($"The file '{to}' already exists.");
+        if (!FolderExists(Parent(to))) throw new DirectoryNotFoundException(Parent(to));
+        Files[Clean(to)] = text;
+        MakeFolder(Parent(to));
+    }
+
+    public void DeleteFile(string path) { if (!Files.Remove(Clean(path))) throw new FileNotFoundException("missing", path); }
+
+    public long FileSize(string path) =>
+        Files.TryGetValue(Clean(path), out var text) ? System.Text.Encoding.UTF8.GetByteCount(text) : throw new FileNotFoundException("missing", path);
 
     public LoadedScript LoadScript(string path, string fromFile)
     {
         string name = Files.ContainsKey(path) ? path : path + ".ooga";
         return Files.TryGetValue(name, out var text) ? new LoadedScript(name, name, text) : null;
     }
+}
+
+// ---------- pretend windows ----------
+
+public class FakeControl : IWindowControl
+{
+    public string Kind;
+    public FakeControl Window;
+    public Action OnClick;
+    public readonly List<FakeControl> Children = new();
+    public bool Closed;
+    public string Text { get; set; } = "";
+    public bool Checked { get; set; }
+    public IReadOnlyList<string> Items { get; set; } = Array.Empty<string>();
+    public int PickedIndex { get; set; } = -1;
+    public int Width { get; set; } = 420;
+    public int Height { get; set; } = 320;
+
+    // what a person would do in the window
+    public FakeControl Find(string kind, int nth = 0) => Children.Where(c => c.Kind == kind).ElementAt(nth);
+    public void Click(string buttonText) => Children.Single(c => c.Kind == "button" && c.Text == buttonText).OnClick();
+    public void Type(string text, int nth = 0) => Find("text_box", nth).Text = text;
+}
+
+public partial class FakeHost
+{
+    public readonly List<FakeControl> Windows = new();
+    public readonly List<string> Popups = new();
+    public readonly Queue<string> PickAnswers = new();
+
+    // What the "person" does each time a window is opened, in order. No script = they close it at once.
+    public readonly Queue<Action<FakeControl>> WhenShown = new();
+
+    public IWindowControl NewWindow(string title)
+    {
+        var w = new FakeControl { Kind = "window", Text = title };
+        w.Window = w;
+        Windows.Add(w);
+        return w;
+    }
+
+    public IWindowControl Add(IWindowControl window, string kind, string text, IReadOnlyList<string> items, Action onClick)
+    {
+        var w = (FakeControl)window;
+        var c = new FakeControl { Kind = kind, Text = text, Items = items ?? Array.Empty<string>(), OnClick = onClick, Window = w };
+        w.Children.Add(c);
+        return c;
+    }
+
+    public void Show(IWindowControl window)
+    {
+        var w = (FakeControl)window;
+        if (WhenShown.Count > 0) WhenShown.Dequeue()(w);
+        w.Closed = true;
+    }
+
+    public void Close(IWindowControl window) => ((FakeControl)window).Closed = true;
+    public void Popup(string text) => Popups.Add(text);
+    public string PickFile() => PickAnswers.Count > 0 ? PickAnswers.Dequeue() : null;
+    public string PickFolder() => PickAnswers.Count > 0 ? PickAnswers.Dequeue() : null;
 }
 
 // A host with no files at all, like a game engine might be.

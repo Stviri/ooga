@@ -46,6 +46,9 @@ public class ActionCall
     // Runs an action value ("action double") with these things, and gives its answer.
     public Func<object, object[], object> Invoke { get; init; }
 
+    // How many things an action value wants: (least, most); most = -1 for any number.
+    public Func<ActionValue, (int Least, int Most)> Wants { get; init; }
+
     public object this[int i] => Things[i];
     public int Count => Things.Length;
 
@@ -241,6 +244,12 @@ public static class Library
         yield return new("write_file", 2, c => Guard(c, () => { c.Files().WriteFile(c.Text(0), Values.Show(c[1]), add: false); return null; }));
         yield return new("add_to_file", 2, c => Guard(c, () => { c.Files().WriteFile(c.Text(0), Values.Show(c[1]), add: true); return null; }));
         yield return new("file_exists", 1, c => Guard(c, () => c.Files().FileExists(c.Text(0))));
+
+        // ---------- folders, spreadsheets, JSON, the web, the clock ----------
+        foreach (var a in WorldLibrary.Actions()) yield return a;
+
+        // ---------- windows and buttons (when the host can show windows) ----------
+        foreach (var a in WindowLibrary.Actions()) yield return a;
 
         // ---------- the C# bridge ----------
         foreach (var a in CSharpBridge.Actions()) yield return a;

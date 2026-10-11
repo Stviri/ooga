@@ -23,6 +23,16 @@ public class ConsoleHost : IOogaHost, IOogaFiles
         this.nameRoot = nameRoot;
     }
 
+    // The host for running scripts on this computer: with real windows when this is the Windows ooga.exe.
+    public static ConsoleHost ForThisComputer(TextReader input, TextWriter output, bool realWait = true)
+    {
+#if OOGA_WINDOWS
+        return new WindowsConsoleHost(input, output, realWait);
+#else
+        return new ConsoleHost(input, output, realWait);
+#endif
+    }
+
     string Full(string path) => workDir == null ? path : Path.Combine(workDir, path);
 
     public void Say(string text) => output.WriteLine(text);
@@ -51,6 +61,28 @@ public class ConsoleHost : IOogaHost, IOogaFiles
     }
 
     public bool FileExists(string path) => File.Exists(Full(path));
+
+    public bool FolderExists(string path) => Directory.Exists(Full(path));
+
+    public IReadOnlyList<string> FilesIn(string folder) =>
+        Directory.GetFiles(Full(folder)).Select(f => Path.Combine(folder, Path.GetFileName(f))).Order(StringComparer.OrdinalIgnoreCase).ToList();
+
+    public IReadOnlyList<string> FoldersIn(string folder) =>
+        Directory.GetDirectories(Full(folder)).Select(f => Path.Combine(folder, Path.GetFileName(f))).Order(StringComparer.OrdinalIgnoreCase).ToList();
+
+    public void MakeFolder(string path) => Directory.CreateDirectory(Full(path));
+
+    public void MoveFile(string from, string to) => File.Move(Full(from), Full(to));
+
+    public void CopyFile(string from, string to) => File.Copy(Full(from), Full(to));
+
+    public void DeleteFile(string path)
+    {
+        if (!File.Exists(Full(path))) throw new FileNotFoundException("missing", path);
+        File.Delete(Full(path));
+    }
+
+    public long FileSize(string path) => new FileInfo(Full(path)).Length;
 
     // 'use "tools.ooga"' looks next to the script that says it. ".ooga" may be left off.
     public LoadedScript LoadScript(string path, string fromFile)

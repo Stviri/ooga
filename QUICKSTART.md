@@ -5,8 +5,8 @@ This page shows how to get Ooga running and what you should see. Every output on
 ## 1. What you need
 
 - **Windows** with the **.NET 8 runtime** (or anything newer: .NET 9, 10, ...).
-  Check in a terminal with `dotnet --list-runtimes`. You need a line that starts with `Microsoft.NETCore.App 8.` (or higher).
-  If it is missing, install ".NET 8 Runtime" (or newer) from https://dotnet.microsoft.com/download.
+  Check in a terminal with `dotnet --list-runtimes`. You need a line that starts with `Microsoft.WindowsDesktop.App 8.` (or higher).
+  If it is missing, install it with `winget install --id Microsoft.DotNet.DesktopRuntime.8 -e`, or download ".NET Desktop Runtime 8" from https://dotnet.microsoft.com/download.
 - **VS Code**. It is optional, but it makes things nicer.
 
 You do **not** need to build anything. The ready-made runner is already in `bin\ooga.exe`.
@@ -58,6 +58,10 @@ hello Grok, welcome to cave.
 | `.\ooga examples\13_csharp.ooga` | the C# door: using .NET from ooga |
 | `.\ooga examples\14_action_values.ooga` | handing actions to other actions |
 | `.\ooga examples\15_use.ooga` | bringing in another file with `use` |
+| `.\ooga examples\16_files.ooga` | folders and files: tidying a messy folder by file ending |
+| `.\ooga examples\17_spreadsheet.ooga` | spreadsheets: writing and reading a CSV file |
+| `.\ooga examples\extra\18_web.ooga` | reading data from a website's API (needs internet) |
+| `.\ooga examples\extra\19_window.ooga` | a real window with a text box, buttons and a check box |
 
 What you should see:
 
@@ -224,7 +228,7 @@ ok     examples\02_calculator.ooga
 ...
 ok     tests\cases\use_05_problem_while_running.ooga
 
-32 ok, 0 wrong.
+36 ok, 0 wrong.
 ooga happy.
 ```
 
@@ -244,7 +248,7 @@ You can get the same random numbers in a normal run too: `.\ooga --seed 1 exampl
 
 ## 9. Linux or macOS (optional)
 
-You need .NET 8 or newer installed. Then:
+You need the .NET 8 SDK (or newer) installed; `ooga.sh` runs ooga from its source. Windows and buttons only work on Windows. Then:
 
 ```text
 ./ooga.sh examples/01_hello.ooga
@@ -257,7 +261,7 @@ You only need this if you change the C# code in `engine\`. It needs the **.NET 8
 ```text
 dotnet test                                   # run all the engine tests
 dotnet run --project engine\Ooga.Cli -- examples\01_hello.ooga
-dotnet publish engine\Ooga.Cli -c Release -r win-x64 --self-contained false -p:DebugType=none -o bin
+dotnet publish engine\Ooga.Cli -f net8.0-windows -c Release -r win-x64 --self-contained false -p:DebugType=none -o bin
 ```
 
 The last line rebuilds `bin\ooga.exe`.

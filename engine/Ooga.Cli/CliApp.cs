@@ -59,7 +59,7 @@ public static class CliApp
             return UsageProblem;
         }
 
-        var host = new ConsoleHost(input, output, realWait);
+        var host = ConsoleHost.ForThisComputer(input, output, realWait);
         return RunScript(path, path, host, new RunOptions { FileName = path, Arguments = args.Skip(1).ToArray(), Seed = seed },
             output, error, color);
     }
@@ -101,7 +101,7 @@ public static class CliApp
         output.WriteLine("ooga talk. type ooga lines and press Enter.");
         output.WriteLine("lines that start a block (if, repeat, count, each, try, me can, or ending in list or box) end with an empty line.");
         output.WriteLine("type bye to leave.");
-        var host = new ConsoleHost(input, output, realWait);
+        var host = ConsoleHost.ForThisComputer(input, output, realWait);
         var talk = new OogaSession(host, new RunOptions { FileName = "talk" });
 
         while (true)

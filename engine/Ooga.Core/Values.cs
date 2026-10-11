@@ -13,6 +13,15 @@ namespace Ooga;
 //
 // Lists and boxes are shared, not copied: "me has b bag" gives the same list a second name.
 
+// Something from the outside (like a window's button) that has named parts ooga can read and change:
+// "text of button", "text of button is \"go\"". Return null when all is well, or a problem text.
+public interface IOogaParts
+{
+    IEnumerable<string> PartNames { get; }
+    string TryGetPart(string name, out object value);
+    string TrySetPart(string name, object value);
+}
+
 public class OogaList
 {
     public readonly List<object> Items;
@@ -140,6 +149,7 @@ public static class Values
         OogaList => "list",
         OogaBox => "box",
         ActionValue => "action",
+        OogaWidget w => w.Kind,
         _ => "csharp",
     };
 

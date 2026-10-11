@@ -57,6 +57,7 @@ public class OogaSession
             try { end = interpreter.RunMore(program); }
             catch (Exception e) { failure = e; }
         }, 256 * 1024 * 1024);
+        if (OperatingSystem.IsWindows()) thread.SetApartmentState(ApartmentState.STA);
         thread.Start();
         thread.Join();
         if (failure is OogaError oe)
