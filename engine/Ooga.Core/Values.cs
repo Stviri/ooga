@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 
 namespace Ooga;
 
@@ -65,9 +64,14 @@ public static class Values
     // ---------- showing ----------
 
     // How "say" shows a value.
-    public static string Show(object v) => Show(v, 0, quoteText: false);
+    // How "say" shows a value: the way a person would write it, not the way the code writes it.
+    //   list "sword" "bow"        -> sword, bow
+    //   box name "grok" health 1  -> name: grok, health: 1
+    //   list 1 (list 2 3)         -> 1, (2, 3)
+    //   an empty list or box      -> (empty)
+    public static string Show(object v) => Show(v, 0);
 
-    static string Show(object v, int depth, bool quoteText)
+    static string Show(object v, int depth)
     {
         if (depth > 20) return "...";
         switch (v)
@@ -75,46 +79,37 @@ public static class Values
             case null: return "nothing";
             case bool b: return b ? "yes" : "no";
             case double d: return FormatNumber(d);
-            case string s: return quoteText ? Quote(s) : s;
+            case string s: return s;
             case ActionValue a: return a.ToString();
             case OogaList list:
-            {
-                var sb = new StringBuilder("list");
-                foreach (var item in list.Items)
-                    sb.Append(' ').Append(Inner(item, depth));
-                return sb.ToString();
-            }
+                if (list.Items.Count == 0) return "(empty)";
+                return string.Join(", ", list.Items.Select(item => Inner(item, depth)));
             case OogaBox box:
             {
-                var sb = new StringBuilder("box");
+                if (box.Count == 0) return "(empty)";
+                var parts = new List<string>();
                 foreach (var key in box.Keys)
                 {
                     box.TryGet(key, out var value);
-                    sb.Append(' ').Append(key is string k && IsPlainName(k) ? k : Inner(key, depth));
-                    sb.Append(' ').Append(Inner(value, depth));
+                    parts.Add(Show(key, depth + 1) + ": " + Inner(value, depth));
                 }
-                return sb.ToString();
+                return string.Join(", ", parts);
             }
             default:
                 return CSharpBridge.ShowThing(v);
         }
     }
 
-    // A value inside a list or box: text in quotes, lists and boxes in ( ), so it reads like ooga code.
+    // A list or box inside another one goes in ( ), so you can see where it starts and ends.
     static string Inner(object v, int depth)
     {
-        string shown = Show(v, depth + 1, quoteText: true);
-        bool wrap = (v is OogaList l && l.Items.Count > 0) || (v is OogaBox b && b.Count > 0)
-                    || (v is double d && d < 0) || v is ActionValue;
+        string shown = Show(v, depth + 1);
+        bool wrap = (v is OogaList l && l.Items.Count > 0) || (v is OogaBox b && b.Count > 0);
         return wrap ? "(" + shown + ")" : shown;
     }
 
     public static string Quote(string s) =>
         "\"" + s.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n") + "\"";
-
-    static bool IsPlainName(string s) =>
-        s.Length > 0 && (char.IsLetter(s[0]) || s[0] == '_') && s.All(c => char.IsLetterOrDigit(c) || c == '_')
-        && !Parser.Keywords.Contains(s);
 
     public static string FormatNumber(double d)
     {

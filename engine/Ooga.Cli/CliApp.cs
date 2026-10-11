@@ -30,7 +30,7 @@ public static class CliApp
             return Talk(input, output, error, color, realWait);
 
         if (args[0] == "--test")
-            return TestRunner.Main(args.Skip(1).ToArray(), output);
+            return TestRunner.Run(args.Skip(1).ToArray(), output);
 
         int? seed = null;
         if (args[0] == "--seed")
@@ -99,7 +99,7 @@ public static class CliApp
     static int Talk(TextReader input, TextWriter output, TextWriter error, bool color, bool realWait)
     {
         output.WriteLine("ooga talk. type ooga lines and press Enter.");
-        output.WriteLine("lines that start a block (if, repeat, count, each, try, me can) end with an empty line.");
+        output.WriteLine("lines that start a block (if, repeat, count, each, try, me can, or ending in list or box) end with an empty line.");
         output.WriteLine("type bye to leave.");
         var host = new ConsoleHost(input, output, realWait);
         var talk = new OogaSession(host, new RunOptions { FileName = "talk" });
@@ -114,7 +114,8 @@ public static class CliApp
 
             var piece = new List<string> { line };
             string first = line.TrimStart().Split(' ')[0];
-            if (BlockStarters.Contains(first) || line.TrimStart().StartsWith("me can "))
+            string lastWord = line.Split('#')[0].TrimEnd().Split(' ').Last();
+            if (BlockStarters.Contains(first) || line.TrimStart().StartsWith("me can ") || lastWord is "list" or "box")
             {
                 while (true)
                 {

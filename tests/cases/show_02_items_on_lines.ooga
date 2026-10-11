@@ -1,0 +1,24 @@
+# lists and boxes written one item (or part) per line, pushed in under "list" or "box"
+me has weapons list
+    "sword"
+
+    "bow"
+    # a note between items is fine
+    "dagger"
+say "weapons: " + weapons
+
+me has hero box
+    name "grok"
+    health 100
+    bag list
+        "rock"
+        "stick"
+say hero
+
+me has team list
+    hero
+    box
+        name "zug"
+        health 50
+say team
+say name of item 2 of team

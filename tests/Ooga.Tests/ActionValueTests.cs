@@ -35,7 +35,7 @@ public class ActionValueTests
     [Fact]
     public void Keep_change_each_and_sort_by()
     {
-        Assert.Equal("list 3 4\nlist 2 4 6 8\nlist \"a\" \"ccc\" \"bb\"\nlist \"a\" \"bb\" \"ccc\"", O.Out(Helpers + "\n" + """
+        Assert.Equal("3, 4\n2, 4, 6, 8\na, ccc, bb\na, bb, ccc", O.Out(Helpers + "\n" + """
             me can length t
                 give size of t
             me has nums list 1 2 3 4
@@ -89,7 +89,7 @@ public class ActionToCSharpTests
     [Fact]
     public void Ooga_action_becomes_a_csharp_delegate()
     {
-        Assert.Equal("2\nlist 1 3 5\nlist 5 3 1\n6", O.Out(Helpers + "\n" + """
+        Assert.Equal("2\n1, 3, 5\n5, 3, 1\n6", O.Out(Helpers + "\n" + """
             me has nums me csharp_new "System.Collections.Generic.List`1[System.Int32]"
             each n in list 1 2 3 4 5
                 me csharp_call nums "Add" n
@@ -102,10 +102,10 @@ public class ActionToCSharpTests
     }
 
     [Theory]
-    [InlineData("me csharp \"System.Linq.Enumerable\" \"Distinct\" (list 1 1 2 3 3)", "list 1 2 3")]
+    [InlineData("me csharp \"System.Linq.Enumerable\" \"Distinct\" (list 1 1 2 3 3)", "1, 2, 3")]
     [InlineData("me csharp \"System.Linq.Enumerable\" \"Sum\" (list 1 2 3.5)", "6.5")]
-    [InlineData("me csharp \"System.Linq.Enumerable\" \"Where\" (list 1 2 3 4) (action is_even)", "list 2 4")]
-    [InlineData("me csharp \"System.Linq.Enumerable\" \"Range\" 1 3", "list 1 2 3")]
+    [InlineData("me csharp \"System.Linq.Enumerable\" \"Where\" (list 1 2 3 4) (action is_even)", "2, 4")]
+    [InlineData("me csharp \"System.Linq.Enumerable\" \"Range\" 1 3", "1, 2, 3")]
     [InlineData("me csharp \"System.Linq.Enumerable\" \"Max\" (list \"b\" \"c\" \"a\")", "c")]
     public void Generic_csharp_methods_and_linq(string call, string expected)
     {

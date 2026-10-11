@@ -24,7 +24,7 @@ public static class TestRunner
 
     public record CaseResult(string Name, bool Passed, string Problem, string Expected, string Actual);
 
-    public static int Main(string[] args, TextWriter output)
+    public static int Run(string[] args, TextWriter output)
     {
         bool make = args.Contains("--make-expected");
         var folders = args.Where(a => a != "--make-expected").ToList();

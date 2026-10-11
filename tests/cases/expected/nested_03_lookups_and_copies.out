@@ -1,6 +1,6 @@
-hunters: list "grok" "zug"
-cooks: list "ugg"
-list "ugg" "new"
+hunters: grok, zug
+cooks: ugg
+ugg, new
 deep
-box a (box b (box c "deep"))
+a: (b: (c: deep))
 yes

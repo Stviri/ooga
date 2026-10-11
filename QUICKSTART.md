@@ -112,29 +112,29 @@ bye! you leave with 18 shells and 1 things.
 **10_lists** (the letters at the end are shown on one line here):
 
 ```text
-scores: list 40 75 12
+scores: 40, 75, 12
 how many: 3
 first: 40
-now: list 40 75 99
+now: 40, 75, 99
 total: 214
 best: 99
-sorted: list 40 75 99
+sorted: 40, 75, 99
 someone got 99!
-fixed: list 41 75 99
+fixed: 41, 75, 99
 o o g a
 ```
 
 **11_boxes**:
 
 ```text
-box name "grok" health 100 club no
+name: grok, health: 100, club: no
 grok get hit. health now 70
 grok pick up club
 has club? yes
 grok get hit. health now 10
 zug get hit. health now -10
 zug is down!
-list (box name "grok" health 10 club yes) (box name "zug" health (-10) club no)
+(name: grok, health: 10, club: yes), (name: zug, health: -10, club: no)
 ```
 
 **13_csharp**:
@@ -145,8 +145,8 @@ list (box name "grok" health 10 club yes) (box name "zug" health (-10) club no)
 ooga booga
 7
 CAVEMAN
-list "rock" "stick" "fire"
-list 20 30
+rock, stick, fire
+20, 30
 ```
 
 ## 5. When something is wrong
@@ -195,7 +195,7 @@ Every word you can use is in [OOGA_RULEBOOK.md](OOGA_RULEBOOK.md).
 .\ooga --talk
 ```
 
-Type a line and press Enter. A value alone is shown right away. Lines that start a block (`if`, `repeat`, `count`, `each`, `try`, `me can`) continue until you press Enter on an empty line. Type `bye` to leave.
+Type a line and press Enter. A value alone is shown right away. Lines that start a block (`if`, `repeat`, `count`, `each`, `try`, `me can`, or a line ending in `list` or `box`) continue until you press Enter on an empty line. Type `bye` to leave.
 
 ```text
 ooga> me has x 5

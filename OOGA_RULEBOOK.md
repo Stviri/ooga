@@ -114,6 +114,15 @@ if bag has 3                 # check inside
 ```
 
 - Lists can hold anything, even other lists: `list 1 "two" (list 3 4)`.
+- **Items on their own lines:** end the line with `list`, then push the items in, one per line. Empty lines and notes in between are fine. On its own line an item can be any value, even math (`price * 2`).
+
+  ```text
+  me has weapons list
+      "sword"
+      "bow"
+      "dagger"
+  ```
+- `say` shows a list the way a person writes it: `say list "sword" "bow"` shows `sword, bow`, and `say "weapons: " + weapons` shows `weapons: sword, bow`. A list inside a list is shown in `( )`: `1, (3, 4)`. An empty list shows `(empty)`.
 - Lists are **shared**: `me has other bag` gives the same list a second name. Changing one changes both.
   To get a separate list, use `me copy bag`.
 - `item k of bag`: a plain name right after `item` is the position. To use a part as the position, wrap it: `item (pos of p) of bag`.
@@ -127,11 +136,22 @@ me has player box name "grok" health 100
 say health of player         # 100
 health of player lose 30     # change a part
 speed of player is 5         # add a new part
-say player                   # box name "grok" health 70 speed 5
+say player                   # name: grok, health: 70, speed: 5
 ```
 
+- `say` shows a box as its parts: `name: grok, health: 70`. A box inside a box is shown in `( )`.
 - Boxes inside boxes: `x of pos of player`.
 - A box can also be a lookup by text: `item "grok" of ages is 30`, `say item "grok" of ages`, `if ages has "grok"`.
+- **Parts on their own lines:** end the line with `box`, then push the parts in, one per line. A part's value can be a `list` or `box` with its own lines, pushed in one more step.
+
+  ```text
+  me has hero box
+      name "grok"
+      health 100
+      bag list
+          "rock"
+          "stick"
+  ```
 - `me keys ages` gives a list of the part names. `me take ages "grok"` takes a part out.
 - Boxes are **shared** like lists. `me copy player` makes a separate one.
 

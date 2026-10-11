@@ -20,14 +20,14 @@ public class LibraryTests
     [InlineData("me smallest 3 7", "3")]
     [InlineData("me biggest (list 4 9 2)", "9")]
     [InlineData("me smallest (list 4 9 2)", "2")]
-    [InlineData("me numbers 1 4", "list 1 2 3 4")]
-    [InlineData("me numbers 3 1", "list 3 2 1")]
+    [InlineData("me numbers 1 4", "1, 2, 3, 4")]
+    [InlineData("me numbers 3 1", "3, 2, 1")]
     // texts
     [InlineData("me upper \"ooga\"", "OOGA")]
     [InlineData("me lower \"OOGA\"", "ooga")]
     [InlineData("me trim \"  hi  \"", "hi")]
-    [InlineData("me split \"a,b,c\" \",\"", "list \"a\" \"b\" \"c\"")]
-    [InlineData("me split \"hey\" \"\"", "list \"h\" \"e\" \"y\"")]
+    [InlineData("me split \"a,b,c\" \",\"", "a, b, c")]
+    [InlineData("me split \"hey\" \"\"", "h, e, y")]
     [InlineData("me join (list 1 \"b\" yes) \", \"", "1, b, yes")]
     [InlineData("me replace \"ooga booga\" \"oo\" \"u\"", "uga buga")]
     [InlineData("me starts_with \"caveman\" \"cave\"", "yes")]
@@ -38,20 +38,20 @@ public class LibraryTests
     [InlineData("me number 7", "7")]
     [InlineData("me text 7", "7")]
     [InlineData("(me text 7) + 1", "71")]
-    [InlineData("me text (list 1 \"a\")", "list 1 \"a\"")]
+    [InlineData("me text (list 1 \"a\")", "1, a")]
     // texts and lists
     [InlineData("me piece \"hello\" 2 4", "ell")]
-    [InlineData("me piece (list 1 2 3 4) 2 3", "list 2 3")]
+    [InlineData("me piece (list 1 2 3 4) 2 3", "2, 3")]
     [InlineData("me piece \"hi\" 2 1", "")]
     [InlineData("me find \"hello\" \"l\"", "3")]
     [InlineData("me find \"hello\" \"z\"", "0")]
     [InlineData("me find (list 5 6 7) 7", "3")]
     [InlineData("me reverse \"abc\"", "cba")]
-    [InlineData("me reverse (list 1 2 3)", "list 3 2 1")]
+    [InlineData("me reverse (list 1 2 3)", "3, 2, 1")]
     // lists
-    [InlineData("me sort (list 3 1 2)", "list 1 2 3")]
-    [InlineData("me sort (list \"b\" \"a\")", "list \"a\" \"b\"")]
-    [InlineData("me copy (list 1 2)", "list 1 2")]
+    [InlineData("me sort (list 3 1 2)", "1, 2, 3")]
+    [InlineData("me sort (list \"b\" \"a\")", "a, b")]
+    [InlineData("me copy (list 1 2)", "1, 2")]
     [InlineData("me pick (list 7)", "7")]
     [InlineData("size of me shuffle (list 1 2 3)", "3")]
     public void Built_in_action_gives(string call, string expected)
@@ -62,7 +62,7 @@ public class LibraryTests
     [Fact]
     public void Take_and_put_at_change_the_list()
     {
-        Assert.Equal("2\nlist 1 3\nlist 0 1 9 3", O.Out("""
+        Assert.Equal("2\n1, 3\n0, 1, 9, 3", O.Out("""
             me has bag list 1 2 3
             say me take bag 2
             say bag
@@ -75,7 +75,7 @@ public class LibraryTests
     [Fact]
     public void Shuffle_keeps_every_item()
     {
-        Assert.Equal("list 1 2 3 4 5", O.Out("say me sort (me shuffle (me numbers 1 5))"));
+        Assert.Equal("1, 2, 3, 4, 5", O.Out("say me sort (me shuffle (me numbers 1 5))"));
     }
 
     [Fact]
@@ -88,8 +88,8 @@ public class LibraryTests
     public void Arguments_come_from_the_runner()
     {
         var run = O.Run("say me arguments", new FakeHost(), new RunOptions { Arguments = new[] { "one", "2" } });
-        Assert.Equal("list \"one\" \"2\"", run.Output);
-        Assert.Equal("list", O.Out("say me arguments"));
+        Assert.Equal("one, 2", run.Output);
+        Assert.Equal("(empty)", O.Out("say me arguments"));
     }
 
     [Fact]
