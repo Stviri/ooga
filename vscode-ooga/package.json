@@ -1,18 +1,31 @@
 {
   "name": "ooga-language",
   "displayName": "Ooga",
-  "description": "Colors for the ooga language",
+  "description": "Ooga language: colours, push-in, file icon and a Run button",
   "publisher": "local",
-  "version": "0.1.1",
-  "engines": { "vscode": "^1.60.0" },
-  "categories": ["Programming Languages"],
+  "version": "0.2.0",
+  "engines": {
+    "vscode": "^1.64.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
   "contributes": {
     "languages": [
       {
         "id": "ooga",
-        "aliases": ["Ooga", "ooga"],
-        "extensions": [".ooga"],
-        "configuration": "./language-configuration.json"
+        "aliases": [
+          "Ooga",
+          "ooga"
+        ],
+        "extensions": [
+          ".ooga"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./icons/ooga-file.png",
+          "dark": "./icons/ooga-file.png"
+        }
       }
     ],
     "grammars": [
@@ -28,6 +41,73 @@
         "editor.insertSpaces": true,
         "editor.detectIndentation": false
       }
-    }
-  }
+    },
+    "commands": [
+      {
+        "command": "ooga.run",
+        "title": "Run Ooga File",
+        "category": "Ooga",
+        "icon": "$(play)"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "ooga.run",
+          "when": "resourceLangId == ooga",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "ooga.run",
+          "when": "resourceLangId == ooga",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "ooga.run",
+          "when": "editorLangId == ooga"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "ooga.run",
+        "key": "ctrl+f5",
+        "when": "editorLangId == ooga"
+      }
+    ],
+    "configuration": {
+      "title": "Ooga",
+      "properties": {
+        "ooga.command": {
+          "type": "string",
+          "default": "",
+          "description": "The ooga command the Run button uses. Leave empty to use ooga.cmd in the open folder, or else \"ooga\" from PATH (install.ps1 sets that up)."
+        }
+      }
+    },
+    "taskDefinitions": [
+      {
+        "type": "ooga",
+        "required": [
+          "file"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "The .ooga file to run"
+          }
+        }
+      }
+    ]
+  },
+  "icon": "icons/ooga-128.png",
+  "main": "./extension.js",
+  "activationEvents": [
+    "onLanguage:ooga",
+    "onCommand:ooga.run"
+  ]
 }
