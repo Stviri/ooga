@@ -1,0 +1,4 @@
+weapons: sword, bow, dagger
+name: grok, health: 100, bag: (rock, stick)
+(name: grok, health: 100, bag: (rock, stick)), (name: zug, health: 50)
+zug

@@ -31,8 +31,8 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 | Checks | `is`, `is same`, `is not`, `is big`, `is small`, `is big or same`, `is small or same`, `has`, `kind of`, `and`, `or`, `not`; texts compare in letter order; lists and boxes compare by what is inside |
 | Conditions | `if` / `else if` / `else`, nested to any depth |
 | Loops | `repeat N`, `repeat while`, `count i from A to B`, `each x in bag`, `stop`, `skip` |
-| Lists | `list 1 2 3`, `item N of bag` (read and change), `size of`, `gain` / `lose`, `has`, lists inside lists |
-| Boxes | `box name "grok" health 100`, `health of player` (read, change, add), boxes inside boxes, `item "key" of box` lookups |
+| Lists | `list 1 2 3` (or one item per pushed-in line), `item N of bag` (read and change), `size of`, `gain` / `lose`, `has`, lists inside lists |
+| Boxes | `box name "grok" health 100` (or one part per pushed-in line), `health of player` (read, change, add), boxes inside boxes, `item "key" of box` lookups |
 | Actions | `me can name a b`, `give`, recursion, use before teaching, shared lists and boxes can be changed |
 | Actions as values | `action double`, `me call f ...`, `keep`, `change_each`, `sort_by` |
 | Problems | `try` / `oops why`, `fail "reason"`; safety stops (`ooga tired`) and `me die` can not be caught |
@@ -70,7 +70,8 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 11. **Talk mode** lets an action be taught again (handy while trying things). Files still forbid it.
 12. **Script checks are repeatable:** random uses seed 1, `wait` does not wait, files go to a fresh temp folder, and line endings do not count. A `.out` file that shows `ooga booga! problem in` means the script must also end with exit code 1.
 13. **`say` shows lists and boxes the way a person writes them**: `sword, bow, dagger` and `name: grok, health: 100`, with `( )` around a list or box inside another one and `(empty)` for an empty one. (Before, `say` showed them as code: `list "sword" "bow" "dagger"`, which beginners found confusing.) Error messages still name the kind: "list of 3 things".
-14. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
+14. **Items and parts on their own lines**: a line ending in `list` or `box` takes the pushed-in lines under it as its items or parts, one per line. On its own line an item or part value can be any value (`x * 2`), because nothing else shares the line. Several items on one line under `list` is a mistake with its own message; the one-line form `list 1 2 3` is unchanged.
+15. **Exit codes:** 0 ok (also after `me die`), 1 mistake in the script, 2 wrong command use or file not found, 3 engine bug.
 
 ## Limitations (known)
 
@@ -87,9 +88,9 @@ Game engine work (Godot, Unity, Unreal) has **not** started on purpose.
 
 Command: `dotnet test Ooga.sln --blame-hang-timeout 2m` (on Linux, .NET SDK 8.0.131).
 
-Result: **530 passed, 0 failed, 0 skipped** (about 2 seconds).
+Result: **552 passed, 0 failed, 0 skipped** (about 2 seconds).
 
-Also: `ooga --test examples tests/cases` → **32 ok, 0 wrong** (15 examples + 17 cases), run with the published `bin/ooga.dll`.
+Also: `ooga --test examples tests/cases docs/ooga-vs-csharp` → **44 ok, 0 wrong** (15 examples + 19 cases + 10 C# comparison programs), run with the published `bin/ooga.dll`.
 
 | Test file | What it covers |
 |---|---|

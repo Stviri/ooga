@@ -459,6 +459,50 @@ public class Parser
         return ParsePrimary();
     }
 
+    // One part of a box: a name, then its value. A value of "list" or "box" may have its own lines under it.
+    void ParsePart(BoxExpr box, bool onOwnLine = false)
+    {
+        var partTok = Next();
+        if (box.Parts.Any(p => p.Name == partTok.Value))
+            throw Err(partTok, $"box already has part {partTok.Value}. each part only once.");
+        if (IsWord(Peek(), "list") || IsWord(Peek(), "box"))
+        {
+            box.Parts.Add((partTok.Value, ParsePrimary()));
+            return;
+        }
+        if (!StartsArg(Peek()) && !(onOwnLine && IsSym(Peek(), "-")))
+            throw Err(Peek(), onOwnLine
+                ? $"box part {partTok.Value} need a value, like: {partTok.Value} 0"
+                : $"box part {partTok.Value} need a value, like: box {partTok.Value} 0");
+        // on its own line a part's value can be any value (health 50 + 10); on one line it is one value each
+        box.Parts.Add((partTok.Value, onOwnLine ? ParseExpr() : ParsePrimary()));
+    }
+
+    // "list" or "box" at the end of a line, with lines pushed in under it:
+    //     me has weapons list
+    //         "sword"
+    //         "bow"
+    bool StartsBlock() => Peek().Kind == Tok.Newline && Peek(1).Kind == Tok.Indent;
+
+    // Reads the pushed-in lines under a list or box, one line at a time.
+    // The block ends the line it started on, so a stand-in end-of-line is put back after it
+    // for whatever was waiting for that line to end (like "me has ...").
+    void ParseLines(Action readLine)
+    {
+        var lineEnd = Next();   // end of the "list" / "box" line
+        Next();                 // the push-in
+        while (Peek().Kind is not (Tok.Dedent or Tok.End))
+        {
+            if (Peek().Kind == Tok.Indent)
+                throw Err(Peek(), "this line is pushed in more than the line above it. line it up with the other lines under it.");
+            readLine();
+            ExpectLineEnd();
+        }
+        var last = Peek();
+        if (last.Kind == Tok.Dedent) Next();
+        t.Insert(p, new Token { Kind = Tok.Newline, Line = last.Line, Col = last.Col, File = lineEnd.File });
+    }
+
     bool StartsArg(Token tk) =>
         tk.Kind is Tok.Number or Tok.Text
         || IsSym(tk, "(")
@@ -521,6 +565,16 @@ public class Parser
                         var list = At(new ListExpr(), tk);
                         while (StartsArg(Peek()))
                             list.Items.Add(ParsePrimary());
+                        if (list.Items.Count == 0 && StartsBlock())
+                            ParseLines(() =>
+                            {
+                                // one item per line, and it can be any value: "sword", 5, x * 2, (list 1 2), or a list / box with its own lines
+                                if (!StartsArg(Peek()) && !IsWord(Peek(), "list") && !IsWord(Peek(), "box") && !IsSym(Peek(), "-"))
+                                    throw Err(Peek(), "lines under list must be things for the list, like: \"sword\" or 5");
+                                list.Items.Add(ParseExpr());
+                                if (!AtLineEnd())
+                                    throw Err(Peek(), $"one thing per line under list. put {Peek()} on its own line.");
+                            });
                         return list;
                     }
                     case "box":
@@ -528,14 +582,16 @@ public class Parser
                         Next();
                         var box = At(new BoxExpr(), tk);
                         while (Peek().Kind == Tok.Word && !Keywords.Contains(Peek().Value))
-                        {
-                            var partTok = Next();
-                            if (box.Parts.Any(p => p.Name == partTok.Value))
-                                throw Err(partTok, $"box already has part {partTok.Value}. each part only once.");
-                            if (!StartsArg(Peek()))
-                                throw Err(Peek(), $"box part {partTok.Value} need a value, like: box {partTok.Value} 0");
-                            box.Parts.Add((partTok.Value, ParsePrimary()));
-                        }
+                            ParsePart(box);
+                        if (box.Parts.Count == 0 && StartsBlock())
+                            ParseLines(() =>
+                            {
+                                if (Peek().Kind != Tok.Word || Keywords.Contains(Peek().Value))
+                                    throw Err(Peek(), "lines under box must be parts, a name and a value, like: health 100");
+                                ParsePart(box, onOwnLine: true);
+                                if (!AtLineEnd())
+                                    throw Err(Peek(), $"one part per line under box. put {Peek()} on its own line.");
+                            });
                         return box;
                     }
                     case "action":

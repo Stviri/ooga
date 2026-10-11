@@ -195,7 +195,7 @@ Every word you can use is in [OOGA_RULEBOOK.md](OOGA_RULEBOOK.md).
 .\ooga --talk
 ```
 
-Type a line and press Enter. A value alone is shown right away. Lines that start a block (`if`, `repeat`, `count`, `each`, `try`, `me can`) continue until you press Enter on an empty line. Type `bye` to leave.
+Type a line and press Enter. A value alone is shown right away. Lines that start a block (`if`, `repeat`, `count`, `each`, `try`, `me can`, or a line ending in `list` or `box`) continue until you press Enter on an empty line. Type `bye` to leave.
 
 ```text
 ooga> me has x 5
